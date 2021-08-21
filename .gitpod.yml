@@ -3,15 +3,15 @@ image:
 
 tasks:
   # Nuxt/Druxt
-  # - name: nuxt/druxt
-  #   init: |
-  #     # Installing Nuxt/Druxt frontend.
-  #     .gitpod/setup-druxt.sh
-  #     gp sync-done yarn
-  #   command: |
-  #     .gitpod/setup-druxt.sh
-  #     gp sync-await drupal
-  #     cd $GITPOD_REPO_ROOT/nuxt && yarn dev
+  - name: nuxt/druxt
+    init: |
+      # Installing Nuxt/Druxt frontend.
+      .gitpod/setup-nuxt.sh
+      gp sync-done npm
+    command: |
+      .gitpod/setup-nuxt.sh
+      gp sync-await drupal
+      cd $GITPOD_REPO_ROOT/nuxt && NUXT_TELEMETRY_DISABLED=1 npm run dev
 
   # # Nuxt/Storybook
   # - name: nuxt/storybook
@@ -45,9 +45,9 @@ ports:
     visibility: public
 
   # Nuxt/Druxt
-  # - port: 3000
-  #   onOpen: ignore
-  #   visibility: public
+  - port: 3000
+    onOpen: ignore
+    visibility: public
 
   # # Nuxt/Druxt
   # - port: 3003
