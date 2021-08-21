@@ -13,12 +13,12 @@ tasks:
       gp sync-await drupal
       cd $GITPOD_REPO_ROOT/nuxt && NUXT_TELEMETRY_DISABLED=1 npm run dev
 
-  # # Nuxt/Storybook
-  # - name: nuxt/storybook
-  #   command: |
-  #     .gitpod/setup-druxt.sh
-  #     gp sync-await drupal
-  #     cd $GITPOD_REPO_ROOT/nuxt && yarn storybook --ci
+  # Nuxt/Storybook
+  - name: nuxt/storybook
+    command: |
+      .gitpod/setup-druxt.sh
+      gp sync-await drupal
+      cd $GITPOD_REPO_ROOT/nuxt && npx nuxt storybook --ci
 
   # Drupal
   - name: ddev/drupal
@@ -49,10 +49,10 @@ ports:
     onOpen: ignore
     visibility: public
 
-  # # Nuxt/Druxt
-  # - port: 3003
-  #   onOpen: ignore
-  #   visibility: public
+  # Nuxt/Druxt
+  - port: 3003
+    onOpen: ignore
+    visibility: public
 
   # Currently un-notified and unsupported mailhog http port
   - port: 8025

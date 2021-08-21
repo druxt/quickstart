@@ -71,6 +71,9 @@ typings/
 # Nuxt generate
 dist
 
+# Nuxt Storybook
+.nuxt-storybook
+
 # vuepress build output
 .vuepress/dist
 
