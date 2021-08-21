@@ -7,12 +7,12 @@ fi
 
 set -eu -o pipefail
 
-DDEV_DIR="${GITPOD_REPO_ROOT}/examples/drupal/.ddev"
+DDEV_DIR="${GITPOD_REPO_ROOT}/drupal/.ddev"
 mkdir -p "$DDEV_DIR"
 
 cat <<CONFIGEND > "${DDEV_DIR}"/config.yaml
 #gitpod-generated
-name: druxtjs
+name: quickstart-druxt-site
 type: drupal9
 docroot: web
 php_version: "7.4"

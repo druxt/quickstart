@@ -1,19 +1,35 @@
 image:
   file: .gitpod/.gitpod.Dockerfile
 
-# ddev and composer are running as part of the prebuild
-# when starting a workspace all docker images are ready
 tasks:
-  - init: |
-      # druxt installation
-      yarn install
-      yarn build
-      # drupal installation
+  # Nuxt/Druxt
+  # - name: nuxt/druxt
+  #   init: |
+  #     # Installing Nuxt/Druxt frontend.
+  #     .gitpod/setup-druxt.sh
+  #     gp sync-done yarn
+  #   command: |
+  #     .gitpod/setup-druxt.sh
+  #     gp sync-await drupal
+  #     cd $GITPOD_REPO_ROOT/nuxt && yarn dev
+
+  # # Nuxt/Storybook
+  # - name: nuxt/storybook
+  #   command: |
+  #     .gitpod/setup-druxt.sh
+  #     gp sync-await drupal
+  #     cd $GITPOD_REPO_ROOT/nuxt && yarn storybook --ci
+
+  # Drupal
+  - name: ddev/drupal
+    init: |
+      # Installing DDev and Drupal backend.
       .gitpod/download-ddev-images.sh
       .gitpod/setup-drupal.sh
     command: |
       .gitpod/setup-ddev.sh
-      cd examples/drupal && ddev start
+      cd $GITPOD_REPO_ROOT/drupal && ddev start
+      gp sync-done drupal
 
 # VScode xdebug extension
 vscode:
@@ -23,13 +39,21 @@ vscode:
     - felixfbecker.php-debug
 
 ports:
-  - port: 3000
-    onOpen: open-browser
-  # Used by projector
-  - port: 6942
-    onOpen: ignore
-  # Direct-connect ddev-webserver port that is the main port
+  # Drupal
   - port: 8080
+    onOpen: ignore
+    visibility: public
+
+  # Nuxt/Druxt
+  # - port: 3000
+  #   onOpen: ignore
+  #   visibility: public
+
+  # # Nuxt/Druxt
+  # - port: 3003
+  #   onOpen: ignore
+  #   visibility: public
+
   # Currently un-notified and unsupported mailhog http port
   - port: 8025
     onOpen: ignore
