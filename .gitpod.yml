@@ -10,14 +10,14 @@ tasks:
       gp sync-done npm
     command: |
       .gitpod/setup-nuxt.sh
+      gp sync-done npm
       gp sync-await drupal
       cd $GITPOD_REPO_ROOT/nuxt && NUXT_TELEMETRY_DISABLED=1 npm run dev
 
   # Nuxt/Storybook
   - name: nuxt/storybook
     command: |
-      .gitpod/setup-druxt.sh
-      gp sync-await drupal
+      gp sync-await npm
       cd $GITPOD_REPO_ROOT/nuxt && npx nuxt storybook --ci
 
   # Drupal
