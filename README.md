@@ -12,7 +12,7 @@ This repostory provides a quickstart installation of:
 
 ## Try it on GitPod
 
-This repository can be run on GitPod, allowing you to run this code inside of a VS Code cloude IDE:
+This repository can be run on GitPod, allowing you to run this code inside of a VS Code cloud IDE:
 
 [![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/druxt/quickstart-druxt-site)
 
