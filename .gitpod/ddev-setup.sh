@@ -1,18 +1,14 @@
 #!/usr/bin/env bash
-if [ -n "$DEBUG_DRUXTJS" ]; then
-    set -x
-fi
-
 # Set up ddev for use on gitpod
 
 set -eu -o pipefail
 
-DDEV_DIR="${GITPOD_REPO_ROOT}/drupal/.ddev"
+DDEV_DIR="${GITPOD_REPO_ROOT}/contenta/.ddev"
 mkdir -p "$DDEV_DIR"
 
 cat <<CONFIGEND > "${DDEV_DIR}"/config.yaml
 #gitpod-generated
-name: quickstart-druxt-site
+name: quickstart-druxt-site-contenta
 type: drupal9
 docroot: web
 php_version: "7.4"

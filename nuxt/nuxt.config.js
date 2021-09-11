@@ -41,6 +41,7 @@ export default {
   // DruxtJS: https://druxtjs.org
   druxt: {
     baseUrl,
+    endpoint: 'api',
   },
 
   // Build Configuration: https://go.nuxtjs.dev/config-build
