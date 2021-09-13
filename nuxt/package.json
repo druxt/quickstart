@@ -9,9 +9,9 @@
     "generate": "nuxt generate"
   },
   "dependencies": {
-    "@nuxtjs/storybook": "^4.1.1",
-    "core-js": "^3.15.1",
-    "druxt-site": "^0.6.0",
+    "@nuxtjs/storybook": "4.1.1",
+    "core-js": "3.16.2",
+    "druxt-site": "0.6.0",
     "nuxt": "^2.15.7"
   },
   "devDependencies": {}

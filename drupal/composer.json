@@ -15,12 +15,12 @@
         }
     ],
     "require": {
-        "composer/installers": "^1.9",
+        "composer/installers": "1.11.0",
         "drupal/core-composer-scaffold": "^9.3",
         "drupal/core-project-message": "^9.3",
         "drupal/core-recommended": "^9.3",
-        "drupal/druxt": "^1.0",
-        "drush/drush": "^10.6"
+        "drupal/druxt": "1.0.2",
+        "drush/drush": "10.6.0"
     },
     "require-dev": {
         "drupal/core-dev": "^9.3"
