@@ -18,6 +18,7 @@ tasks:
   - name: nuxt/storybook
     command: |
       gp sync-await npm
+      gp sync-await drupal
       cd $GITPOD_REPO_ROOT/nuxt && NUXT_TELEMETRY_DISABLED=1 npx nuxt storybook --ci
 
 # Drupal
