@@ -1,3 +1,5 @@
+import opn from 'opn'
+
 const baseUrl = process.env.BASE_URL
 
 export default {
@@ -45,5 +47,10 @@ export default {
 
   // Build Configuration: https://go.nuxtjs.dev/config-build
   build: {
+  },
+
+  hooks: {
+    // Open browser once build is done.
+    'build:done': () => opn('https://localhost:3000')
   }
 }
