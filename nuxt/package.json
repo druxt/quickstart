@@ -15,6 +15,6 @@
     "nuxt": "2.15.8"
   },
   "devDependencies": {
-    "opn": "^6.0.0"
+    "opn": "6.0.0"
   }
 }
