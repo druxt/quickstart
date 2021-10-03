@@ -9,12 +9,13 @@
     "generate": "nuxt generate"
   },
   "dependencies": {
-    "@nuxtjs/storybook": "4.1.1",
     "core-js": "3.17.3",
     "druxt-site": "0.9.0",
     "nuxt": "2.15.8"
   },
   "devDependencies": {
-    "opn": "6.0.0"
+    "@nuxtjs/storybook": "^4.1.1",
+    "opn": "6.0.0",
+    "postcss": "^8.3.8"
   }
 }
