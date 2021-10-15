@@ -1,36 +1,17 @@
 image:
-  file: .gitpod/.gitpod.Dockerfile
+  file: .gitpod/Dockerfile
 
 tasks:
-  # Drupal
-  - name: ddev/drupal
-    init: |
+  - init: |
       # Installing DDev and Drupal backend.
-      .gitpod/download-ddev-images.sh
-      .gitpod/setup-drupal.sh
-    command: |
-      .gitpod/setup-ddev.sh
-      cd $GITPOD_REPO_ROOT/drupal && ddev start
-      gp sync-done drupal
-
-  # Nuxt/Storybook
-  - name: nuxt/storybook
-    command: |
-      gp sync-await npm
-      gp sync-await drupal
-      cd $GITPOD_REPO_ROOT/nuxt && NUXT_TELEMETRY_DISABLED=1 npx nuxt storybook --ci
-
-  # Nuxt/Druxt
-  - name: nuxt/druxt
-    init: |
+      .gitpod/scripts/ddev-download-images.sh
+      .gitpod/scripts/ddev-setup.sh
+      .gitpod/scripts/drupal-setup.sh
       # Installing Nuxt/Druxt frontend.
-      .gitpod/setup-nuxt.sh
-      gp sync-done npm
+      .gitpod/scripts/nuxt-setup.sh
     command: |
-      .gitpod/setup-nuxt.sh
-      gp sync-done npm
-      clear && echo "Waiting for ddev/drupal..."
-      gp sync-await drupal
+      .gitpod/scripts/ddev-setup.sh
+      .gitpod/scripts/nuxt-setup.sh
       cd $GITPOD_REPO_ROOT/nuxt && NUXT_TELEMETRY_DISABLED=1 npm run dev
 
 # VScode xdebug extension
@@ -78,24 +59,14 @@ ports:
   # xdebug port
   - port: 9000
     onOpen: ignore
-  # projector port
-  - port: 9999
 
 github:
   prebuilds:
-    # enable for the master/default branch (defaults to true)
     master: true
-    # enable for all branches in this repo (defaults to false)
     branches: true
-    # enable for pull requests coming from this repo (defaults to true)
     pullRequests: true
-    # enable for pull requests coming from forks (defaults to false)
     pullRequestsFromForks: true
-    # add a check to pull requests (defaults to true)
     addCheck: true
-    # add a "Review in Gitpod" button as a comment to pull requests (defaults to false)
     addComment: false
-    # add a "Review in Gitpod" button to the pull request's description (defaults to false)
     addBadge: true
-    # add a label once the prebuild is ready to pull requests (defaults to false)
     addLabel: true
