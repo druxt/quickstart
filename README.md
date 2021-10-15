@@ -10,11 +10,19 @@ This repostory provides a quickstart installation of:
 - DruxtSite
 
 
-## Try it on GitPod
+## Getting started
 
-This repository can be run on GitPod, allowing you to run this code inside of a VS Code cloud IDE:
+1. Click the **Use this template** button in GitHub and follow the on-screen instructions to **Create a new repository**.
 
-[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/druxt/quickstart-druxt-site)
+2. Once the repository has been generated, open it in Gitpod by appending `https://gitpod.io#` to the GitHub url.
+
+   Example: `https://gitpod.io#github.com/druxt/quickstart-druxt-site`
+
+   _Note:_ If this is your first time using Gitpod, you can signup for a free plan with your Github account.
+
+3. Wait for your codebase to build.
+
+   _Note:_ To speed up this step, enable Prebuilds by follow the instructions @ https://www.gitpod.io/docs/prebuilds#enable-prebuilt-workspaces
 
 
 ## How to use it
@@ -51,8 +59,7 @@ Refer to the documentation for more details: https://ddev.readthedocs.io
 
 Druxt integrates with the Nuxt Storybook module to provide zero-configuration, auto-discovery stories with access to live data from your Drupal backend.
 
-Refer to the Service list above.
-
+To start Storybook, navigate to the `nuxt` directory and run `npx nuxt storybook`.
 
 
 ## License
