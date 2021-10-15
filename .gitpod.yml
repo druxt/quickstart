@@ -1,17 +1,18 @@
 image:
-  file: .gitpod/.gitpod.Dockerfile
+  file: .gitpod/Dockerfile
 
 tasks:
   - init: |
       # Installing DDev and Drupal backend.
-      .gitpod/download-ddev-images.sh
-      .gitpod/setup-drupal.sh
+      .gitpod/scripts/ddev-download-images.sh
+      .gitpod/scripts/ddev-setup.sh
+      .gitpod/scripts/drupal-setup.sh
       # Installing Nuxt/Druxt frontend.
-      .gitpod/setup-nuxt.sh
+      .gitpod/scripts/nuxt-setup.sh
     command: |
       .gitpod/setup-ddev.sh
       cd $GITPOD_REPO_ROOT/drupal && ddev start
-      cd $GITPOD_REPO_ROOT && .gitpod/setup-nuxt.sh
+      cd $GITPOD_REPO_ROOT && .gitpod/scripts/nuxt-setup.sh
       cd $GITPOD_REPO_ROOT/nuxt && NUXT_TELEMETRY_DISABLED=1 npm run dev
 
 # VScode xdebug extension

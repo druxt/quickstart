@@ -1,7 +1,4 @@
 #!/usr/bin/env bash
-if [ -n "$DEBUG_DRUXTJS" ]; then
-    set -x
-fi
 
 # Set up Druxt for use on gitpod
 
