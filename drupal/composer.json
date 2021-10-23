@@ -19,7 +19,7 @@
         "drupal/core-composer-scaffold": "^9.3",
         "drupal/core-project-message": "^9.3",
         "drupal/core-recommended": "^9.3",
-        "drupal/druxt": "1.0.2",
+        "drupal/druxt": "1.1.0",
         "drush/drush": "10.6.1"
     },
     "require-dev": {
