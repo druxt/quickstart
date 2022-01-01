@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "core-js": "3.18.3",
-    "druxt-site": "0.9.1",
+    "druxt-site": "0.10.4",
     "nuxt": "2.15.8"
   },
   "devDependencies": {
