@@ -16,6 +16,6 @@
   "devDependencies": {
     "@nuxtjs/storybook": "4.2.0",
     "opn": "6.0.0",
-    "postcss": "8.3.11"
+    "postcss": "8.4.5"
   }
 }
