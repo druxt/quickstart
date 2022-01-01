@@ -1,0 +1,11 @@
+#!/bin/bash
+
+## Description: Install Drupal
+## Usage: drupal-install
+## Example: "ddev drupal-install"
+
+composer install
+drush -y site:install --account-pass=admin --site-name='quickstart-druxt-site' standard
+drush -y pm:enable druxt
+drush role:perm:add anonymous "access druxt resources"
+drush -y config:set jsonapi.settings read_only 0
