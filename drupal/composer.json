@@ -23,7 +23,7 @@
         "drush/drush": "11.0.0"
     },
     "require-dev": {
-        "drupal/core-dev": "9.3.2"
+        "drupal/core-dev": "9.3.6"
     },
     "conflict": {
         "drupal/drupal": "*"
