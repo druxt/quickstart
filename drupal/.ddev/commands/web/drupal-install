@@ -26,22 +26,3 @@ drush simple-oauth:generate-keys ../keys
 
 # Enable authenticated editting via JSON:API.
 drush -y config:set jsonapi.settings read_only 0
-
-# Create a Druxt consumer.
-drush php-eval '
-$consumer = \Drupal\consumers\Entity\Consumer::create([
-  "owner_id"     => 1,
-  "uuid"         => getenv("OAUTH_CLIENT_ID") ?: \Drupal::service("uuid")->generate(),
-  "label"        => "Druxt",
-  "description"  => "DruxtJS is a bridge between frameworks, Drupal in the back, Nuxt in the front.\n\nhttps://druxtjs.org",
-  "confidential" => FALSE,
-  "pkce"         => TRUE,
-  "redirect"     => getenv("OAUTH_CALLBACK") ?: "http://localhost:3000/callback",
-  "image_styles" => [],
-  "roles"        => [],
-]);
-$consumer->save();
-'
-
-# Login.
-drush user:login
