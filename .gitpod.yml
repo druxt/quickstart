@@ -4,7 +4,7 @@ image:
 tasks:
   - init: |
       # Setup Gitpod .env
-      echo -en "OAUTH_CALLBACK=https://8080-${GITPOD_WORKSPACE_ID}.${GITPOD_WORKSPACE_CLUSTER_HOST}/callback\nOAUTH_CLIENT_ID=${GITPOD_INSTANCE_ID}" > .env
+      echo -en "OAUTH_CALLBACK=https://3000-${GITPOD_WORKSPACE_ID}.${GITPOD_WORKSPACE_CLUSTER_HOST}/callback\nOAUTH_CLIENT_ID=${GITPOD_INSTANCE_ID}" > .env
 
       # Setup DDev
       $GITPOD_REPO_ROOT/.gitpod/scripts/ddev-download-images.sh
