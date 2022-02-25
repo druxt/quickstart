@@ -3,15 +3,29 @@ image:
 
 tasks:
   - init: |
-      # Installing DDev and Drupal backend.
-      .gitpod/scripts/ddev-download-images.sh
-      .gitpod/scripts/ddev-setup.sh
-      .gitpod/scripts/drupal-setup.sh
-      # Installing Nuxt/Druxt frontend.
-      .gitpod/scripts/nuxt-setup.sh
+      # Setup Gitpod .env
+      echo -en "OAUTH_CALLBACK=https://3000-${GITPOD_WORKSPACE_ID}.${GITPOD_WORKSPACE_CLUSTER_HOST}/callback\nOAUTH_CLIENT_ID=${GITPOD_INSTANCE_ID}" > .env
+
+      # Setup DDev
+      $GITPOD_REPO_ROOT/.gitpod/scripts/ddev-download-images.sh
+      $GITPOD_REPO_ROOT/.gitpod/scripts/ddev-setup.sh
+
+      # Install Drupal
+      $GITPOD_REPO_ROOT/.gitpod/scripts/drupal-setup.sh
+
+      # Installing Nuxt
+      $GITPOD_REPO_ROOT/.gitpod/scripts/nuxt-setup.sh
     command: |
-      .gitpod/scripts/ddev-setup.sh
-      .gitpod/scripts/nuxt-setup.sh
+      # Start DDev
+      $GITPOD_REPO_ROOT/.gitpod/scripts/ddev-setup.sh
+
+      # Add OAuth2 consumer
+      cd $GITPOD_REPO_ROOT/drupal && ddev druxt-add-consumer
+
+      # Setup Nuxt
+      $GITPOD_REPO_ROOT/.gitpod/scripts/nuxt-setup.sh
+
+      # Start Nuxt
       cd $GITPOD_REPO_ROOT/nuxt && NUXT_TELEMETRY_DISABLED=1 npm run dev
 
 # VScode xdebug extension

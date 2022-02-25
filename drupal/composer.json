@@ -20,7 +20,9 @@
         "drupal/core-project-message": "9.3.6",
         "drupal/core-recommended": "9.3.6",
         "drupal/druxt": "1.1.1",
-        "drush/drush": "11.0.5"
+        "drupal/simple_oauth": "^5.2",
+        "drush/drush": "11.0.5",
+        "vlucas/phpdotenv": "^5.4"
     },
     "require-dev": {
         "drupal/core-dev": "9.3.6"
@@ -30,6 +32,11 @@
     },
     "minimum-stability": "dev",
     "prefer-stable": true,
+    "autoload": {
+        "files": [
+            "load.environment.php"
+        ]
+    },
     "config": {
         "sort-packages": true,
         "allow-plugins": {

@@ -1,0 +1,21 @@
+#!/bin/bash
+
+## Description: Installs a Simple OAuth consumer for Druxt use on Gitpod.
+## Usage: druxt-add-consumer
+## Example: "ddev druxt-add-consumer"
+
+# Create a Druxt consumer.
+drush php-eval '
+$consumer = \Drupal\consumers\Entity\Consumer::create([
+  "owner_id"     => 1,
+  "uuid"         => getenv("OAUTH_CLIENT_ID") ?: \Drupal::service("uuid")->generate(),
+  "label"        => "Druxt",
+  "description"  => "DruxtJS is a bridge between frameworks, Drupal in the back, Nuxt in the front.\n\nhttps://druxtjs.org",
+  "confidential" => FALSE,
+  "pkce"         => TRUE,
+  "redirect"     => getenv("OAUTH_CALLBACK") ?: "http://localhost:3000/callback",
+  "image_styles" => [],
+  "roles"        => [],
+]);
+$consumer->save();
+'

@@ -2,6 +2,8 @@ import opn from 'opn'
 
 const baseUrl = process.env.BASE_URL
 
+require('dotenv').config({ path: '../.env' })
+
 export default {
   // Global page headers: https://go.nuxtjs.dev/config-head
   head: {
@@ -33,12 +35,34 @@ export default {
 
   // Modules for dev and build (recommended): https://go.nuxtjs.dev/config-modules
   buildModules: [
+    '@nuxtjs/auth-next',
+    'druxt-site'
   ],
 
   // Modules: https://go.nuxtjs.dev/config-modules
-  modules: [
-    'druxt-site',
-  ],
+  modules: [],
+
+  auth: {
+    redirect: {
+      callback: '/callback',
+      logout: '/',
+    },
+    strategies: {
+      // OAuth 2 Authorization code grant with PKCE.
+      drupal: {
+        scheme: 'oauth2',
+        endpoints: {
+          authorization: baseUrl + '/oauth/authorize',
+          token: baseUrl + '/oauth/token',
+          userInfo: baseUrl + '/oauth/userinfo',
+        },
+        clientId: process.env.OAUTH_CLIENT_ID,
+        responseType: 'code',
+        grantType: 'authorization_code',
+        codeChallengeMethod: 'S256',
+      },
+    },
+  },
 
   // DruxtJS: https://druxtjs.org
   druxt: {
