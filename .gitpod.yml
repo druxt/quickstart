@@ -4,7 +4,7 @@ image:
 tasks:
   - init: |
       # Setup Gitpod .env
-      echo -en "OAUTH_CALLBACK=https://3000-${GITPOD_WORKSPACE_ID}.${GITPOD_WORKSPACE_CLUSTER_HOST}/callback\nOAUTH_CLIENT_ID=${GITPOD_INSTANCE_ID}" > .env
+      $GITPOD_REPO_ROOT/.gitpod/scripts/env-setup.sh
 
       # Setup DDev
       $GITPOD_REPO_ROOT/.gitpod/scripts/ddev-download-images.sh
@@ -16,6 +16,9 @@ tasks:
       # Installing Nuxt
       $GITPOD_REPO_ROOT/.gitpod/scripts/nuxt-setup.sh
     command: |
+      # Setup Gitpod .env
+      $GITPOD_REPO_ROOT/.gitpod/scripts/env-setup.sh
+
       # Start DDev
       $GITPOD_REPO_ROOT/.gitpod/scripts/ddev-setup.sh
 
