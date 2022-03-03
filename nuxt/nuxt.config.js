@@ -35,38 +35,18 @@ export default {
 
   // Modules for dev and build (recommended): https://go.nuxtjs.dev/config-modules
   buildModules: [
-    '@nuxtjs/auth-next',
+    'druxt-auth',
     'druxt-site'
   ],
 
   // Modules: https://go.nuxtjs.dev/config-modules
   modules: [],
 
-  auth: {
-    redirect: {
-      callback: '/callback',
-      logout: '/',
-    },
-    strategies: {
-      // OAuth 2 Authorization code grant with PKCE.
-      drupal: {
-        scheme: 'oauth2',
-        endpoints: {
-          authorization: baseUrl + '/oauth/authorize',
-          token: baseUrl + '/oauth/token',
-          userInfo: baseUrl + '/oauth/userinfo',
-        },
-        clientId: process.env.OAUTH_CLIENT_ID,
-        responseType: 'code',
-        grantType: 'authorization_code',
-        codeChallengeMethod: 'S256',
-      },
-    },
-  },
-
   // DruxtJS: https://druxtjs.org
   druxt: {
     baseUrl,
+    // Enable OAuth2 authentication.
+    auth: { clientId: process.env.OAUTH_CLIENT_ID },
     // Disable deprecated Entity fields.
     entity: { components: { fields: false }},
     // Set the default theme to render Site regions.
