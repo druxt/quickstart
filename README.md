@@ -8,6 +8,7 @@ This repostory provides a quickstart installation of:
 - Drupal 9
 - Nuxt 2
 - DruxtSite
+- DruxtAuth
 
 
 ## Quickstart
@@ -59,6 +60,18 @@ DDEV is used to manage the Drupal instance, and provides a CLI that can be used 
 These commands should be run from within the `/drupal` folder.
 
 Refer to the documentation for more details: https://ddev.readthedocs.io
+
+### @nuxtjs/auth-next
+
+> Zero-boilerplate authentication support for Nuxt.js!
+
+The @nuxtjs/auth-next module is installed and configured to connect to the Drupal Simple OAuth module by way of the DruxtAuth module:
+
+```js
+this.$auth.loginWith('drupal-authorization_code')
+```
+
+- More details on how to use the `$auth` service can be found at https://auth.nuxtjs.org/api/auth
 
 ### @nuxtjs/storybook
 
