@@ -61,6 +61,18 @@ These commands should be run from within the `/drupal` folder.
 
 Refer to the documentation for more details: https://ddev.readthedocs.io
 
+### Lando
+> It's a free, open source, cross-platform, local development environment and DevOps tool built on Docker container technology and developed by Tandem.
+
+Lando will manage your Drupal workflow. All commands should be executed within the `/drupal` folder. For additional information on Lando: https://docs.lando.dev/getting-started/
+
+To use Lando
+
+- `cd ./drupal`
+- `lando start`
+- `drush si --db-url="mysql//drupal9:drupal9@database:3306/drupal9" minimal && drush en druxt -y`
+- Visit http://druxt-quickstart.lndo.site/ in your browser
+
 ### @nuxtjs/auth-next
 
 > Zero-boilerplate authentication support for Nuxt.js!
