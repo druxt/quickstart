@@ -1,8 +1,13 @@
 # quickstart-druxt-site
+make sure to use either node v14, or node v16 when running the following commands of the setup.
 
 ## Build Setup
 
 ```bash
+
+# use node version from nvmrc file when you have nvm installed locally
+$ nvm use
+
 # install dependencies
 $ npm install
 
