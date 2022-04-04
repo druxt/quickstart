@@ -1,8 +1,7 @@
 import opn from 'opn'
 
-const baseUrl = process.env.BASE_URL
-
 require('dotenv').config({ path: '../.env' })
+const baseUrl = process.env.BASE_URL
 
 export default {
   // Global page headers: https://go.nuxtjs.dev/config-head
