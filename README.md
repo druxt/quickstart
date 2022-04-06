@@ -21,6 +21,41 @@ Try it before you fork it:
 
 ## Getting started
 
+### Local development (ddev)
+
+1. Click the **Use this template** button in GitHub and follow the on-screen instructions to **Create a new repository**.
+
+2. Clone the repository locally.
+
+   Example: `git clone git@github.com:druxt/quickstart-druxt-site.git`
+
+3. Setup an `.env` file and update as required: `cp .env.example .env`
+
+4. Install and setup Drupal:
+
+   (from repository root)
+
+   ```
+   cd drupal
+   ddev start
+   ddev drupal-install
+   ddev druxt-add-consumer
+   ```
+
+5. Install and run Nuxt:
+
+   (from repository root)
+
+   ```
+   cd nuxt
+   nvm use
+   npm install
+   npm run dev
+   ```
+
+
+### Cloud development (Gitpod.io)
+
 1. Click the **Use this template** button in GitHub and follow the on-screen instructions to **Create a new repository**.
 
 2. Once the repository has been generated, open it in Gitpod by appending `https://gitpod.io#` to the GitHub url.

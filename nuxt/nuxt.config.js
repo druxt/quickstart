@@ -1,8 +1,5 @@
-import opn from 'opn'
-
-const baseUrl = process.env.BASE_URL
-
 require('dotenv').config({ path: '../.env' })
+const baseUrl = process.env.BASE_URL
 
 export default {
   // Global page headers: https://go.nuxtjs.dev/config-head
@@ -55,10 +52,5 @@ export default {
 
   // Build Configuration: https://go.nuxtjs.dev/config-build
   build: {
-  },
-
-  hooks: {
-    // Open browser once build is done.
-    'build:done': () => opn('https://localhost:3000')
   }
 }
