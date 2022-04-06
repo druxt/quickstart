@@ -21,7 +21,7 @@
         "drupal/core-recommended": "9.3.6",
         "drupal/druxt": "1.1.1",
         "drupal/simple_oauth": "^5.2",
-        "drush/drush": "11.0.5",
+        "drush/drush": "^11.0",
         "vlucas/phpdotenv": "^5.4"
     },
     "require-dev": {
