@@ -9,7 +9,7 @@
     "generate": "nuxt generate"
   },
   "dependencies": {
-    "core-js": "3.22.0",
+    "core-js": "3.22.2",
     "dotenv": "^16.0.0",
     "druxt": "^0.18.2",
     "druxt-auth": "^0.1.0",
