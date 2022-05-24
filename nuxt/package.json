@@ -17,7 +17,7 @@
     "nuxt": "2.15.8"
   },
   "devDependencies": {
-    "@nuxtjs/storybook": "4.3.0",
+    "@nuxtjs/storybook": "^4.2.0",
     "postcss": "8.4.14"
   }
 }
