@@ -68,8 +68,6 @@ Try it before you fork it:
 
    _Note:_ To speed up this step, enable Prebuilds by follow the instructions @ https://www.gitpod.io/docs/prebuilds#enable-prebuilt-workspaces
 
-## Getting started without Gitpod
-If you're choosing to set up the quickstart without the use of Gitpod, make sure to setup the nuxt folder while using node v14 or node v16. You can also switch to the version of the .nvmrc file if you type `nvm use`.
 
 ## How to use it
 
