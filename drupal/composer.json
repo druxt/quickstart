@@ -16,16 +16,16 @@
     ],
     "require": {
         "composer/installers": "2.1.1",
-        "drupal/core-composer-scaffold": "9.4.4",
-        "drupal/core-project-message": "9.4.4",
-        "drupal/core-recommended": "9.4.4",
+        "drupal/core-composer-scaffold": "9.4.5",
+        "drupal/core-project-message": "9.4.5",
+        "drupal/core-recommended": "9.4.5",
         "drupal/druxt": "1.1.1",
         "drupal/simple_oauth": "^5.2",
         "drush/drush": "11.1.1",
         "vlucas/phpdotenv": "^5.4"
     },
     "require-dev": {
-        "drupal/core-dev": "9.4.4"
+        "drupal/core-dev": "9.4.5"
     },
     "conflict": {
         "drupal/drupal": "*"
