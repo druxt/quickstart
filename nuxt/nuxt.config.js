@@ -32,7 +32,7 @@ export default {
 
   // Modules for dev and build (recommended): https://go.nuxtjs.dev/config-modules
   buildModules: [
-    'druxt-auth',
+    ['druxt-auth', { clientId: process.env.OAUTH_CLIENT_ID }],
     'druxt-site'
   ],
 
@@ -42,8 +42,6 @@ export default {
   // DruxtJS: https://druxtjs.org
   druxt: {
     baseUrl,
-    // Enable OAuth2 authentication.
-    auth: { clientId: process.env.OAUTH_CLIENT_ID },
     // Disable deprecated Entity fields.
     entity: { components: { fields: false }},
     // Set the default theme to render Site regions.
