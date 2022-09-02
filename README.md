@@ -1,5 +1,7 @@
 # DruxtSite quickstart - Drupal
 
+[![CircleCI](https://dl.circleci.com/status-badge/img/gh/druxt/quickstart-druxt-site/tree/develop.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/gh/druxt/quickstart-druxt-site/tree/develop)
+
 > One click, Fully Decoupled Drupal Site starter-kit with Druxt.
 
 DruxtSite connects Drupal to Nuxt via JSON:API to provide a framework for building a Fully Decoupled site.

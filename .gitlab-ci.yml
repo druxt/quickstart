@@ -1,0 +1,54 @@
+stages:
+  - build
+  - test
+
+cache:
+  paths:
+    - drupal/vendor/
+
+build:
+  stage: build
+  image: php:7.4
+  before_script:
+    - apt-get update -yqq
+    - apt-get install -yqq git libpq-dev libcurl4-gnutls-dev libicu-dev libvpx-dev libjpeg-dev libpng-dev libxpm-dev zlib1g-dev libfreetype6-dev libxml2-dev libexpat1-dev libbz2-dev libgmp3-dev libldap2-dev unixodbc-dev libsqlite3-dev libaspell-dev libsnmp-dev libpcre3-dev libtidy-dev libonig-dev libzip-dev nodejs
+
+    # Install PHP extensions
+    - docker-php-ext-install mbstring pdo_pgsql curl intl gd xml zip bz2 opcache
+
+    # Install Composer
+    - curl -sS https://getcomposer.org/installer | php
+
+    # Install NVM and Yarn
+    - curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
+    - export NVM_DIR="$HOME/.nvm" && . "$NVM_DIR/nvm.sh" --no-use
+    - nvm install && nvm use
+    - npm install --global yarn
+
+  script:
+    # Validate and build composer packages
+    - cd drupal && php composer.phar validate && php composer.phar install
+
+    # Install and build Nuxt
+    - cd ../nuxt && npm install && npm run build
+  artifacts:
+    paths:
+      - drupal/web
+
+test_e2e:
+  stage: test
+  image: drud/ddev-gitpod-base:20220817
+  dependencies:
+    - build
+  services:
+    - name: docker:dind
+      alias: dockerdaemon
+  variables:
+    DOCKER_HOST: tcp://dockerdaemon:2375/
+    DOCKER_DRIVER: overlay2
+    DOCKER_TLS_CERTDIR: ""
+  before_script:
+    - sudo chown -R gitpod:gitpod .
+  script:
+    # Start DDev and install the Drupal backend.
+    - cd drupal && ddev start -y && ddev drupal-install
