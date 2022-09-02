@@ -9,10 +9,10 @@
     "generate": "nuxt generate"
   },
   "dependencies": {
-    "core-js": "3.24.1",
-    "dotenv": "^16.0.1",
+    "core-js": "3.25.0",
+    "dotenv": "^16.0.2",
     "druxt": "^0.20.0",
-    "druxt-auth": "^0.1.0",
+    "druxt-auth": "^0.2.0",
     "druxt-site": "^0.13.0",
     "nuxt": "2.15.8"
   },
