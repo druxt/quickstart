@@ -47,6 +47,9 @@ jobs:
       # - name: Run linter 👀
       #   run: cd nuxt && npm run lint
 
+      - name: Create .env 👨🏻‍💻
+        run: cp .env.example .env
+
       - name: Setup ddev
         uses: jonaseberle/github-action-setup-ddev@v1
         with:
