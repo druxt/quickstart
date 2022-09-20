@@ -43,9 +43,8 @@ jobs:
       - name: Install frontend dependencies 👨🏻‍💻
         run: cd nuxt && npm install
 
-      # @TODO - Add linting
-      # - name: Run linter 👀
-      #   run: cd nuxt && npm run lint
+      - name: Run linter 👀
+        run: cd nuxt && npm run lint
 
       - name: Create .env 👨🏻‍💻
         run: cp .env.example .env
