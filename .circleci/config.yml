@@ -39,7 +39,8 @@ jobs:
       - run:
           name: Install and build Nuxt
           command: |
-            cd nuxt && npm install && npm run build
+            which npm
+            cd nuxt && npm install && NUXT_TELEMETRY_DISABLED=1 npm run build
 
       # - run:
       #     name: Install Codecov
