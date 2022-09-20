@@ -43,8 +43,9 @@ jobs:
       - name: Install frontend dependencies 👨🏻‍💻
         run: cd nuxt && npm install
 
-      - name: Run linter 👀
-        run: cd nuxt && npm run lint
+      # @TODO - Add linting
+      # - name: Run linter 👀
+      #   run: cd nuxt && npm run lint
 
       - name: Setup ddev
         uses: jonaseberle/github-action-setup-ddev@v1
