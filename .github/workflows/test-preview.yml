@@ -60,8 +60,9 @@ jobs:
       - name: Install Drupal 👨🏻‍💻
         run: cd drupal && ddev drupal-install
 
-      - name: Run tests 🧪
-        run: cd nuxt && BASE_URL=http://quickstart-druxtsite.ddev.site yarn test
+      # @TODO - Add tests
+      # - name: Run tests 🧪
+      #   run: cd nuxt && BASE_URL=http://quickstart-druxtsite.ddev.site yarn test
 
       - name: Generate dist 👨🏻‍💻
         run: cd nuxt && NUXT_TELEMETRY_DISABLED=1 npm run generate
