@@ -10,9 +10,10 @@
     "lint:fix": "prettier --write --list-different . && npm run lint:js -- --fix && npm run lint:style -- --fix",
     "lint:js": "eslint --ext .js,.vue --ignore-path ../.gitignore .",
     "lint:style": "stylelint **/*.{vue,css} --ignore-path ../.gitignore",
+    "serve": "npm run generate && nuxt start",
     "start": "nuxt start",
     "test": "npm run test:unit && npm run test:e2e",
-    "test:e2e": "echo 'test e2e'",
+    "test:e2e": "start-server-and-test serve http://localhost:3000 'npx cypress run'",
     "test:unit": "jest"
   },
   "lint-staged": {
@@ -50,6 +51,7 @@
     "jest-environment-jsdom": "^29.0.3",
     "lint-staged": "^13.0.3",
     "postcss": "8.4.16",
+    "start-server-and-test": "^1.14.0",
     "stylelint": "^14.12.0",
     "stylelint-config-prettier": "^9.0.3",
     "stylelint-config-recommended-vue": "^1.4.0",

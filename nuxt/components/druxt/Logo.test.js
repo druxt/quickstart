@@ -1,3 +1,5 @@
+/* global describe, expect, test */
+
 import { mount } from '@vue/test-utils'
 import Logo from './Logo.vue'
 
