@@ -36,11 +36,12 @@ jobs:
           command: |
             cd drupal && php ../composer.phar validate && php ../composer.phar install
 
-      - run:
-          name: Install and build Nuxt
-          command: |
-            which npm
-            cd nuxt && npm install && NUXT_TELEMETRY_DISABLED=1 npm run build
+      # @TODO - Circle not seeing NPM
+      # - run:
+      #     name: Install and build Nuxt
+      #     command: |
+      #       which npm
+      #       cd nuxt && npm install && NUXT_TELEMETRY_DISABLED=1 npm run build
 
       # - run:
       #     name: Install Codecov
@@ -52,11 +53,11 @@ jobs:
           # fallback to using the latest cache if no exact match is found.
           - v1-dependencies-
 
-      - save_cache:
-          paths:
-            - drupal/vendor
-            - nuxt/node_modules
-          key: v1-dependencies-{{ checksum "drupal/composer.json" }}-{{ checksum "nuxt/package.json" }}
+      # - save_cache:
+      #     paths:
+      #       - drupal/vendor
+      #       - nuxt/node_modules
+      #     key: v1-dependencies-{{ checksum "drupal/composer.json" }}-{{ checksum "nuxt/package.json" }}
 
       - persist_to_workspace:
           root: ~/repo
