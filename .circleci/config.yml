@@ -169,6 +169,6 @@ workflows:
       # - test_unit:
       #     requires:
       #       - build
-      - test_e2e:
-          requires:
-            - build
+      # - test_e2e:
+      #     requires:
+      #       - build
