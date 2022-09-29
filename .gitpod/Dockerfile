@@ -16,3 +16,6 @@ RUN php -r "unlink('composer-setup.php');"
 
 # Install latest npm
 RUN npm install -g npm
+
+# Install cypress
+RUN npx cypress install
