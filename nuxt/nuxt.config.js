@@ -2,7 +2,7 @@ require('dotenv').config({ path: '../.env' })
 const baseUrl = process.env.BASE_URL || ''
 
 export default {
-  target: 'static',
+  target: process.env.NUXT_TARGET,
 
   // Global page headers: https://go.nuxtjs.dev/config-head
   head: {

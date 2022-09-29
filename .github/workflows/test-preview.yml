@@ -61,7 +61,7 @@ jobs:
         run: cd nuxt && npm run test:unit
 
       - name: Generate dist 👨🏻‍💻
-        run: cd nuxt && NUXT_TELEMETRY_DISABLED=1 npm run generate
+        run: cd nuxt && NUXT_TARGET=static NUXT_TELEMETRY_DISABLED=1 npm run generate
 
       - name: Run end-to-end tests 🧪
         run: cd nuxt && npm run test:e2e

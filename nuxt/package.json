@@ -10,10 +10,12 @@
     "lint:fix": "prettier --write --list-different . && npm run lint:js -- --fix && npm run lint:style -- --fix",
     "lint:js": "eslint --ext .js,.vue --ignore-path ../.gitignore .",
     "lint:style": "stylelint **/*.{vue,css} --ignore-path ../.gitignore",
-    "serve": "npm run generate && nuxt start",
+    "serve": "npm run build && npm start",
     "start": "nuxt start",
     "test": "npm run test:unit && npm run test:e2e",
     "test:e2e": "start-server-and-test serve http://localhost:3000 'npx cypress run'",
+    "test:e2e:dev": "start-server-and-test dev http://localhost:3000 'npx cypress open'",
+    "test:e2e:open": "start-server-and-test serve http://localhost:3000 'npx cypress open'",
     "test:unit": "jest"
   },
   "lint-staged": {
