@@ -1,0 +1,100 @@
+name: test-preview
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+
+jobs:
+  test_preview:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        node: [16]
+
+    steps:
+      - name: Checkout 🛎
+        uses: actions/checkout@master
+
+      - name: Setup node env 🏗
+        uses: actions/setup-node@v3.4.1
+        with:
+          node-version: ${{ matrix.node }}
+          check-latest: true
+
+      - name: Update npm 🏗
+        run: |
+          npm install -g npm
+          npm --version
+      - name: Cache node_modules 📦
+        uses: actions/cache@v3.0.8
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+      - name: Install frontend dependencies 👨🏻‍💻
+        run: cd nuxt && npm install
+
+      - name: Lint code 👀
+        run: cd nuxt && npm run lint
+
+      - name: Create .env 👨🏻‍💻
+        run: cp .env.example .env
+      - name: Setup ddev
+        uses: jonaseberle/github-action-setup-ddev@v1
+        with:
+          autostart: false
+      - name: Start ddev
+        run: cd drupal && ddev start
+      - name: Install Drupal 👨🏻‍💻
+        run: cd drupal && ddev drupal-install
+
+      - name: Run unit tests 🧪
+        run: cd nuxt && npm run test:unit
+
+      - name: Generate dist 👨🏻‍💻
+        run: cd nuxt && NUXT_TARGET=static NUXT_TELEMETRY_DISABLED=1 npm run generate
+
+      - name: Run end-to-end tests 🧪
+        run: cd nuxt && npm run test:e2e
+
+      - name: Deploy to Netlify
+        uses: nwtgck/actions-netlify@v1.2
+        with:
+          publish-dir: './nuxt/dist'
+          production-branch: main
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          deploy-message: "Deploy from GitHub Actions"
+          enable-pull-request-comment: true
+          enable-commit-comment: true
+          overwrites-pull-request-comment: true
+          github-deployment-environment: ${{ github.head_ref }}
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+        timeout-minutes: 1
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: cypress-videos
+          path: nuxt/cypress/videos
+      - uses: actions/upload-artifact@v3
+        if: failure()
+        with:
+          name: cypress-screenshots
+          path: nuxt/cypress/screenshots
+
+      - uses: codecov/codecov-action@v3
+        with:
+          files: ./nuxt/coverage/clover.xml
+          name: codecov-umbrella
+          fail_ci_if_error: true
+          verbose: true
