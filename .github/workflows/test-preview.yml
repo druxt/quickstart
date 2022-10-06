@@ -3,11 +3,10 @@ name: test-preview
 on:
   push:
     branches:
-      - main
       - develop
+      - theme/tailwindcss
   pull_request:
     branches:
-      - main
       - develop
 
 jobs:
