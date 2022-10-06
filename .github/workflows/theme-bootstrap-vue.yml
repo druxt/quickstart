@@ -1,0 +1,49 @@
+name: theme-bootstrap-vue
+
+on:
+  push:
+    branches:
+      - develop
+      - feature/theme-bootstrapvue
+
+jobs:
+  theme_bootstrap_vue:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout 🛎
+        uses: actions/checkout@master
+
+      - name: Setup node env 🏗
+        uses: actions/setup-node@v3.5.0
+        with:
+          node-version: 16
+          check-latest: true
+
+      - name: Update npm 🏗
+        run: |
+          npm install -g npm
+          npm --version
+      - name: Cache node_modules 📦
+        uses: actions/cache@v3.0.8
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+      - name: Install frontend dependencies 👨🏻‍💻
+        run: cd nuxt && npm install
+
+      - name: Install BootstrapVue 👨🏻‍💻
+        run: |
+          cd nuxt
+          npm install bootstrap-vue
+          sed -i "s/modules: \[\]/modules: \['bootstrap-vue\/nuxt\']/g" nuxt.config.js
+
+      - name: Commit & Push changes 🛎
+        uses: actions-js/push@master
+        with:
+          branch: 'theme/bootstrap-vue'
+          force: true
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          message: 'chore(theme-bootstrap-vue): add bootstrap-vue'
