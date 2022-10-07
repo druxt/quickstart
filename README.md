@@ -1,35 +1,38 @@
-# DruxtSite quickstart - Drupal
+# Druxt Quickstart
 
-[![CircleCI](https://dl.circleci.com/status-badge/img/gh/druxt/quickstart-druxt-site/tree/develop.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/gh/druxt/quickstart-druxt-site/tree/develop)
+> One click, fully Decoupled Drupal with DruxtJS.
 
-> One click, Fully Decoupled Drupal Site starter-kit with Druxt.
-
-DruxtSite connects Drupal to Nuxt via JSON:API to provide a framework for building a Fully Decoupled site.
+Druxt Quickstart provides a Drupal and Nuxt mono-repo to get you started with DruxtJS power decoupled Drupal development.
 
 This repostory provides a quickstart installation of:
 - Drupal 9
 - Nuxt 2
-- DruxtSite
-- DruxtAuth
-- Node v16
+- Druxt 0
 
-
-## Quickstart
+## Quick-er-start
 
 Try it before you fork it:
 
-[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/druxt/quickstart-druxt-site)
+[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/Decipher/quickstart)
+
+
+## Theme branches
+
+Start quicker with a pre-installed UI Framework.
+
+- [BootstrapVue](https://github.com/Decipher/quickstart/tree/theme/bootstrap-vue)
+- [TailwindCSS](https://github.com/Decipher/quickstart/tree/theme/tailwindcss)
 
 
 ## Getting started
 
-### Local development (ddev)
+### Local development with [DDev](https://ddev.readthedocs.io)
 
 1. Click the **Use this template** button in GitHub and follow the on-screen instructions to **Create a new repository**.
 
 2. Clone the repository locally.
 
-   Example: `git clone git@github.com:druxt/quickstart-druxt-site.git`
+   Example: `git clone git@github.com:Decipher/quickstart.git`
 
 3. Setup an `.env` file and update as required: `cp .env.example .env`
 
@@ -56,13 +59,13 @@ Try it before you fork it:
    ```
 
 
-### Cloud development (Gitpod.io)
+### Cloud development with [Gitpod.io](https://gitpod.io)
 
 1. Click the **Use this template** button in GitHub and follow the on-screen instructions to **Create a new repository**.
 
 2. Once the repository has been generated, open it in Gitpod by appending `https://gitpod.io#` to the GitHub url.
 
-   Example: `https://gitpod.io#github.com/druxt/quickstart-druxt-site`
+   Example: `https://gitpod.io#github.com/Decipher/quickstart`
 
    _Note:_ If this is your first time using Gitpod, you can signup for a free plan with your Github account.
 
