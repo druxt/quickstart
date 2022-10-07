@@ -13,15 +13,15 @@ This repostory provides a quickstart installation of:
 
 Try it before you fork it:
 
-[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/Decipher/quickstart)
+[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/druxt/quickstart)
 
 
 ## Theme branches
 
 Start quicker with a pre-installed UI Framework.
 
-- [BootstrapVue](https://github.com/Decipher/quickstart/tree/theme/bootstrap-vue)
-- [TailwindCSS](https://github.com/Decipher/quickstart/tree/theme/tailwindcss)
+- [BootstrapVue](https://github.com/druxt/quickstart/tree/theme/bootstrap-vue)
+- [TailwindCSS](https://github.com/druxt/quickstart/tree/theme/tailwindcss)
 
 
 ## Getting started
@@ -32,7 +32,7 @@ Start quicker with a pre-installed UI Framework.
 
 2. Clone the repository locally.
 
-   Example: `git clone git@github.com:Decipher/quickstart.git`
+   Example: `git clone git@github.com:druxt/quickstart.git`
 
 3. Setup an `.env` file and update as required: `cp .env.example .env`
 
@@ -65,7 +65,7 @@ Start quicker with a pre-installed UI Framework.
 
 2. Once the repository has been generated, open it in Gitpod by appending `https://gitpod.io#` to the GitHub url.
 
-   Example: `https://gitpod.io#github.com/Decipher/quickstart`
+   Example: `https://gitpod.io#github.com/druxt/quickstart`
 
    _Note:_ If this is your first time using Gitpod, you can signup for a free plan with your Github account.
 
