@@ -1,0 +1,64 @@
+name: config-serverless
+
+on:
+  push:
+    branches:
+      - develop
+      - feature/config-serverless
+
+jobs:
+  config_serverless:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout 🛎
+        uses: actions/checkout@master
+
+      - name: Setup node env 🏗
+        uses: actions/setup-node@v3.5.0
+        with:
+          node-version: 16
+          check-latest: true
+
+      - name: Update npm 🏗
+        run: |
+          npm install -g npm
+          npm --version
+      - name: Cache node_modules 📦
+        uses: actions/cache@v3.0.10
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+      - name: Install frontend dependencies 👨🏻‍💻
+        run: cd nuxt && npm install
+
+      - name: Create .env 👨🏻‍💻
+        run: cp .env.example .env
+      - name: Setup ddev
+        uses: jonaseberle/github-action-setup-ddev@v1
+        with:
+          autostart: false
+      - name: Start ddev
+        run: cd drupal && ddev start
+      - name: Install backend dependencies 👨🏻‍💻
+        run: cd drupal && ddev composer install
+
+      - name: Install Tome 👨🏻‍💻      
+        run: |
+          cd drupal
+          ddev composer require drupal-tome/tome_drush drupal/tome
+          sed -i "s/sites\/default\/files\/sync/\.\.\/config\/sync/g" web/sites/default/settings.ddev.php
+          ddev drush tome:init -y
+      - name: Update Druxt config
+        run: |
+          sed -i "s/\/\/ middleware: false/middleware: false/g" nuxt/nuxt.config.js
+
+      - name: Commit & Push changes 🛎
+        uses: actions-js/push@master
+        with:
+          branch: 'serverless'
+          force: true
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          message: 'chore(serverless): add serverless configuration'
