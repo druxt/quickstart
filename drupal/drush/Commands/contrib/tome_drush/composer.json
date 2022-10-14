@@ -1,0 +1,16 @@
+{
+    "name": "drupal-tome/tome_drush",
+    "description": "Contains global Drush commands for initializing and installing Tome.",
+    "type": "drupal-drush",
+    "require": {
+        "drush/drush": "^9.6.0 || ^10.0 || ^11.0"
+    },
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Samuel Mortenson",
+            "email": "samuel@mortenson.coffee"
+        }
+    ],
+    "minimum-stability": "dev"
+}
