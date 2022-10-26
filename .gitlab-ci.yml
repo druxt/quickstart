@@ -37,7 +37,7 @@ build:
 
 test_e2e:
   stage: test
-  image: drud/ddev-gitpod-base:20220817
+  image: drud/ddev-gitpod-base:20221025
   dependencies:
     - build
   services:
