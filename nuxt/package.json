@@ -30,10 +30,11 @@
   "dependencies": {
     "core-js": "3.26.0",
     "dotenv": "^16.0.3",
-    "druxt": "^0.21.0",
     "druxt-auth": "^0.2.0",
-    "druxt-site": "^0.13.0",
-    "nuxt": "2.15.8"
+    "druxt-site": "^0.14.0",
+    "nuxt": "2.15.8",
+    "vue-server-renderer": "^2.7.13",
+    "vue-template-compiler": "^2.7.13"
   },
   "devDependencies": {
     "@babel/eslint-parser": "^7.19.1",
