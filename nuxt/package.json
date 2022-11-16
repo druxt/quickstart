@@ -28,6 +28,7 @@
     }
   },
   "dependencies": {
+    "bootstrap-vue": "^2.23.1",
     "core-js": "3.26.1",
     "dotenv": "^16.0.3",
     "druxt-auth": "^0.2.0",
