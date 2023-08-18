@@ -60,7 +60,7 @@ jobs:
         run: cd nuxt && npm run test:e2e
 
       - name: Deploy to Netlify
-        uses: nwtgck/actions-netlify@v1.2
+        uses: nwtgck/actions-netlify@v2.1
         with:
           publish-dir: './nuxt/dist'
           production-branch: main
