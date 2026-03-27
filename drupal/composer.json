@@ -16,7 +16,7 @@
     ],
     "require": {
         "composer/installers": "2.2.0",
-        "cweagans/composer-patches": "^1.7.2",
+        "cweagans/composer-patches": "^2.0.0",
         "drupal/core-composer-scaffold": "9.4.8",
         "drupal/core-project-message": "9.4.8",
         "drupal/core-recommended": "9.4.8",
