@@ -1,0 +1,21 @@
+{
+  "name": "druxt-quickstart",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Druxt quickstart: fully decoupled Drupal + Nuxt mono-repo starter.",
+  "packageManager": "npm@8.19.2",
+  "scripts": {
+    "setup": "node scripts/setup.mjs",
+    "dev": "node scripts/dev.mjs",
+    "build": "npm --prefix nuxt run build",
+    "start": "node scripts/start.mjs",
+    "stop": "node scripts/stop.mjs",
+    "assemble": "node scripts/devtools.mjs assemble",
+    "provision": "node scripts/devtools.mjs provision",
+    "devtools": "node scripts/devtools.mjs",
+    "login": "node scripts/login.mjs",
+    "info": "node scripts/info.mjs",
+    "reset": "node scripts/reset.mjs",
+    "postinstall": "node scripts/postinstall.mjs"
+  }
+}

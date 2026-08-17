@@ -4,11 +4,23 @@
 ## Usage: drupal-install
 ## Example: "ddev drupal-install"
 
+# Fail fast: a failed step must fail the whole install, not leave a
+# half-provisioned site that later commands "fix" silently.
+set -euo pipefail
+
 # Install composer dependencies.
 composer install
 
 # Install a standard Drupal installation.
 drush -y site:install --site-name='quickstart-druxt-site' standard
+
+# Drupal 11's standard profile no longer creates content types itself -
+# Article and Page ship as separate core recipes. Without them there are
+# no node bundles, and jsonapi_views can't register a route for any
+# node-based view (including the front page).
+drush -y recipe:apply "$(pwd)/core/recipes/article_content_type"
+drush -y recipe:apply "$(pwd)/core/recipes/page_content_type"
+drush -y cache:rebuild
 
 # Enable the Druxt module.
 drush -y pm:enable druxt
@@ -20,6 +32,7 @@ drush role:perm:add anonymous "access druxt resources"
 drush -y pm:enable simple_oauth
 
 # Configure and generate keys for Simple OAuth.
+mkdir -p ../keys
 drush -y config:set simple_oauth.settings public_key ../keys/public.key
 drush -y config:set simple_oauth.settings private_key ../keys/private.key
 drush simple-oauth:generate-keys ../keys

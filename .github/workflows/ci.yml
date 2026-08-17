@@ -1,0 +1,112 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+# Least-privilege: nothing here needs write access to the repo.
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, pdo_sqlite, intl, gd, xml, zip, opcache
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - name: Validate and install Composer dependencies
+        working-directory: drupal
+        run: composer validate --strict && composer install --no-interaction --no-progress
+
+      # Not `npm run build` - Druxt fetches the JSON:API index at build
+      # time, so building needs a live Drupal backend. That happens in
+      # test_e2e, via .devtools/.
+      - name: Install Nuxt dependencies
+        working-directory: nuxt
+        run: npm install
+
+      - name: Create .env
+        run: cp .env.example .env
+
+      # Lint + unit tests were ported from the old auto-running
+      # test-preview.yml, which is now a manual-only preview workflow.
+      - name: Lint code
+        working-directory: nuxt
+        run: npm run lint
+
+      - name: Run unit tests
+        working-directory: nuxt
+        run: npm run test:unit
+
+      # fail_ci_if_error is false (the old workflow had true): tokenless
+      # uploads for public repos are rate-limited and shouldn't fail CI on
+      # a starter kit. The token-less integration itself is unchanged.
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          files: ./nuxt/coverage/clover.xml
+          name: codecov-umbrella
+          fail_ci_if_error: false
+
+  test_e2e:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, pdo_sqlite, intl, gd, xml, zip, opcache
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - name: Assemble, provision, and start the Drupal backend
+        working-directory: drupal
+        run: |
+          .devtools/assemble
+          .devtools/provision
+          .devtools/start
+        env:
+          WEBSERVER_HOST: 127.0.0.1
+          WEBSERVER_PORT: 8888
+
+      - name: Install Nuxt dependencies
+        working-directory: nuxt
+        run: npm install
+
+      - name: Install Cypress binary
+        working-directory: nuxt
+        run: npx cypress install
+
+      - name: Run e2e tests
+        working-directory: nuxt
+        run: npm run test:e2e
+
+      - name: Upload Cypress artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cypress-artifacts
+          path: |
+            nuxt/cypress/screenshots
+            nuxt/cypress/videos

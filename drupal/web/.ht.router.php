@@ -24,6 +24,12 @@
  * @see http://php.net/manual/en/features.commandline.webserver.php
  */
 
+if (PHP_SAPI !== 'cli-server') {
+  // Bail out if this is not PHP's Development Server.
+  header($_SERVER['SERVER_PROTOCOL'] . ' 403 Forbidden');
+  exit;
+}
+
 $url = parse_url($_SERVER['REQUEST_URI']);
 if (file_exists(__DIR__ . $url['path'])) {
   // Serve the requested resource as-is.
@@ -33,12 +39,12 @@ if (file_exists(__DIR__ . $url['path'])) {
 // Work around the PHP bug.
 $path = $url['path'];
 $script = 'index.php';
-if (strpos($path, '.php') !== FALSE) {
+if (str_contains($path, '.php')) {
   // Work backwards through the path to check if a script exists. Otherwise
   // fallback to index.php.
   do {
     $path = dirname($path);
-    if (preg_match('/\.php$/', $path) && is_file(__DIR__ . $path)) {
+    if (str_ends_with($path, '.php') && is_file(__DIR__ . $path)) {
       // Discovered that the path contains an existing PHP file. Use that as the
       // script to include.
       $script = ltrim($path, '/');

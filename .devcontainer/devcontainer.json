@@ -1,0 +1,45 @@
+{
+  "name": "Druxt Quickstart",
+  "image": "mcr.microsoft.com/devcontainers/base:trixie",
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "16.18.1"
+    },
+    "ghcr.io/devcontainers/features/php:1": {
+      "version": "8.4",
+      "installComposer": true
+    },
+    "ghcr.io/devcontainers-extra/features/mise:1": {},
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+  "forwardPorts": [8888, 3000],
+  "portsAttributes": {
+    "8888": {
+      "label": "Drupal backend (drupal/.devtools)",
+      "onAutoForward": "silent"
+    },
+    "3000": {
+      "label": "Nuxt frontend",
+      "onAutoForward": "silent"
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "hverlin.mise-vscode",
+        "davidanson.vscode-markdownlint",
+        "streetsidesoftware.code-spell-checker",
+        "EditorConfig.EditorConfig",
+        "redhat.vscode-yaml",
+        "bmewburn.vscode-intelephense-client",
+        "ValeryanM.vscode-phpsab",
+        "SanderRonde.phpstan-vscode",
+        "Stanislav.vscode-drupal",
+        "Vue.volar",
+        "dbaeumer.vscode-eslint"
+      ]
+    }
+  },
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
+  "remoteUser": "vscode"
+}

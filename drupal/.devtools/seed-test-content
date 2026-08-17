@@ -1,0 +1,49 @@
+#!/usr/bin/env php
+<?php
+
+/**
+ * @file
+ * Create one published Article node for the Cypress e2e suite to assert
+ * against.
+ *
+ * Not part of `provision` - a fresh quickstart install is intentionally
+ * empty (see the front page's "No front page content has been created
+ * yet." text, and the existing homepage spec that asserts it), and this
+ * script would defeat that for everyday users. Run explicitly, only by
+ * `test_e2e` in CI, right after `.devtools/provision`.
+ */
+
+declare(strict_types=1);
+
+namespace QuickstartDevTools;
+
+require_once __DIR__ . '/helpers.php';
+
+echo '===============================' . PHP_EOL;
+echo '      SEED TEST CONTENT        ' . PHP_EOL;
+echo '===============================' . PHP_EOL;
+echo PHP_EOL;
+
+TASK('Creating one published Article node.');
+$node_id = trim(drush('php-eval %s', <<<'PHP'
+$node = \Drupal\node\Entity\Node::create([
+  "type" => "article",
+  "title" => "Druxt quickstart test article",
+  "body" => [
+    "value" => "Seeded by .devtools/seed-test-content for the Cypress e2e suite.",
+    "format" => "basic_html",
+  ],
+  "status" => 1,
+  "uid" => 1,
+  // Article defaults to promoted, which would put it on the front page
+  // and break homepage.cy.js's "empty frontpage" assertion. Keep this
+  // node reachable only at its own path so the two specs stay independent
+  // of run order.
+  "promote" => 0,
+]);
+$node->save();
+echo $node->id();
+PHP));
+PASS('Article node created (node/%s).', $node_id);
+
+echo PHP_EOL;

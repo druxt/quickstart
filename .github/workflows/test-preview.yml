@@ -1,93 +1,203 @@
 name: test-preview
 
+# Manual only: provisions Drupal + Nuxt and exposes both over Cloudflare
+# Quick Tunnels. Mirrors the manual `preview` job in .gitlab-ci.yml —
+# this never runs on push/PR; regular CI for that lives in ci.yml.
+#
+# mode input: both (default) | dev | prod
+# - prod: Nuxt build + start on :3000 - test built/bundled behaviour.
+# - dev:  Nuxt dev server on :3001 - HMR picks up edits live. Cloudflared
+#   proxies the port, not the process, so the tunnel URLs survive
+#   frontend restarts on the same port.
+#
+# code-server (VS Code in the browser) and the one-time Drupal login
+# link are owner conveniences that only make sense with authentication:
+# workflow logs on public repos are world-readable, so both are skipped
+# unless the PREVIEW_CODE_PASSWORD secret is set. With it set,
+# code-server requires that password (--auth password).
 on:
-  push:
-    branches:
-      - develop
-  pull_request:
-    branches:
-      - develop
+  workflow_dispatch:
+    inputs:
+      duration:
+        description: 'Seconds to keep the preview alive'
+        required: false
+        default: 3600
+        type: number
+      mode:
+        description: 'Frontend mode(s) to expose'
+        required: false
+        default: both
+        type: choice
+        options:
+          - both
+          - dev
+          - prod
+
+permissions:
+  contents: read
+
+concurrency:
+  group: test-preview
+  cancel-in-progress: true
 
 jobs:
   test_preview:
     runs-on: ubuntu-latest
-
+    # GitHub's job cap; allows durations up to ~6h. Re-triggering the
+    # workflow cancels the running preview (concurrency group above).
+    timeout-minutes: 360
     steps:
-      - name: Checkout 🛎
-        uses: actions/checkout@master
-
-      - name: Setup node env 🏗
-        uses: actions/setup-node@v3.5.1
+      - uses: actions/checkout@v4
         with:
-          node-version: 16
-          check-latest: true
+          persist-credentials: false
 
-      - name: Update npm 🏗
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, pdo_sqlite, intl, gd, xml, zip, opcache
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - name: Assemble, provision, and start the Drupal backend
+        working-directory: drupal
         run: |
-          npm install -g npm
-          npm --version
-      - name: Cache node_modules 📦
-        uses: actions/cache@v3.0.11
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
-      - name: Install frontend dependencies 👨🏻‍💻
-        run: cd nuxt && npm install
-
-      - name: Lint code 👀
-        run: cd nuxt && npm run lint
-
-      - name: Create .env 👨🏻‍💻
-        run: cp .env.example .env
-      - name: Setup ddev
-        uses: jonaseberle/github-action-setup-ddev@v1
-        with:
-          autostart: false
-      - name: Start ddev
-        run: cd drupal && ddev start
-      - name: Install Drupal 👨🏻‍💻
-        run: cd drupal && ddev drupal-install
-
-      - name: Run unit tests 🧪
-        run: cd nuxt && npm run test:unit
-
-      - name: Generate dist 👨🏻‍💻
-        run: cd nuxt && NUXT_TARGET=static NUXT_TELEMETRY_DISABLED=1 npm run generate
-
-      - name: Run end-to-end tests 🧪
-        run: cd nuxt && npm run test:e2e
-
-      - name: Deploy to Netlify
-        uses: nwtgck/actions-netlify@v1.2
-        with:
-          publish-dir: './nuxt/dist'
-          production-branch: main
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          deploy-message: "Deploy from GitHub Actions"
-          enable-pull-request-comment: true
-          enable-commit-comment: true
-          overwrites-pull-request-comment: true
-          github-deployment-environment: ${{ github.head_ref }}
+          .devtools/assemble
+          .devtools/provision
+          .devtools/start
         env:
-          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
-        timeout-minutes: 1
+          WEBSERVER_HOST: 127.0.0.1
+          WEBSERVER_PORT: 8888
 
-      - uses: actions/upload-artifact@v3
-        with:
-          name: cypress-videos
-          path: nuxt/cypress/videos
-      - uses: actions/upload-artifact@v3
-        if: failure()
-        with:
-          name: cypress-screenshots
-          path: nuxt/cypress/screenshots
+      - name: Install frontend dependencies
+        working-directory: nuxt
+        run: npm install
 
-      - uses: codecov/codecov-action@v3
-        with:
-          files: ./nuxt/coverage/clover.xml
-          name: codecov-umbrella
-          fail_ci_if_error: true
-          verbose: true
+      - name: Build and start the Nuxt frontend (prod, :3000)
+        if: ${{ inputs.mode != 'dev' }}
+        working-directory: nuxt
+        run: |
+          npm run build
+          nohup npm start > /tmp/nuxt-prod.log 2>&1 &
+
+      # Nuxt 2's HMR client is an EventSource on the same origin
+      # (/__webpack_hmr), so hot updates flow through the tunnel.
+      - name: Start the Nuxt dev server (dev, :3001)
+        if: ${{ inputs.mode != 'prod' }}
+        working-directory: nuxt
+        run: nohup npm run dev -- -p 3001 > /tmp/nuxt-dev.log 2>&1 &
+
+      - name: Start Cloudflare tunnels
+        env:
+          # Pinned release + SHA-256 so a changed upstream artifact can
+          # never execute with this workflow's credentials.
+          CLOUDFLARED_VERSION: '2026.8.2'
+          CLOUDFLARED_SHA256: 'fcfb02b575a52ca1af2e3267af4e1517bcdeb30ac48c834b69abaed3c0576ad2'
+        run: |
+          set -euo pipefail
+          [ "$(dpkg --print-architecture)" = "amd64" ]
+          curl -sSL -o cloudflared "https://github.com/cloudflare/cloudflared/releases/download/${CLOUDFLARED_VERSION}/cloudflared-linux-amd64"
+          echo "${CLOUDFLARED_SHA256}  cloudflared" | sha256sum -c -
+          sudo install -m 0755 cloudflared /usr/local/bin/cloudflared
+          nohup cloudflared tunnel --url http://localhost:8888 > /tmp/tunnel-backend.log 2>&1 &
+          if [ "${{ inputs.mode }}" != "dev" ]; then
+            nohup cloudflared tunnel --url http://localhost:3000 > /tmp/tunnel-frontend.log 2>&1 &
+          fi
+          if [ "${{ inputs.mode }}" != "prod" ]; then
+            nohup cloudflared tunnel --url http://localhost:3001 > /tmp/tunnel-frontend-dev.log 2>&1 &
+          fi
+
+      # VS Code in the browser, for poking at the checkout live. Only
+      # started when PREVIEW_CODE_PASSWORD (secret) is set: without a
+      # password there is nothing between a public Quick Tunnel URL and
+      # a shell as the runner user.
+      - name: Start code-server (VS Code in the browser)
+        env:
+          PREVIEW_CODE_PASSWORD: ${{ secrets.PREVIEW_CODE_PASSWORD }}
+          CODE_SERVER_VERSION: 'v4.132.0'
+        run: |
+          set -euo pipefail
+          CODE_SERVER_ENABLED=false
+          if [ -n "${PREVIEW_CODE_PASSWORD:-}" ]; then
+            curl -fsSL https://code-server.dev/install.sh | sh -s -- --version "$CODE_SERVER_VERSION"
+            PASSWORD="$PREVIEW_CODE_PASSWORD" nohup code-server --auth password --bind-addr 0.0.0.0:8080 "$GITHUB_WORKSPACE" > /tmp/code-server.log 2>&1 &
+            nohup cloudflared tunnel --url http://localhost:8080 > /tmp/tunnel-code.log 2>&1 &
+            CODE_SERVER_ENABLED=true
+          fi
+          echo "CODE_SERVER_ENABLED=$CODE_SERVER_ENABLED" >> "$GITHUB_ENV"
+
+      - name: Wait for tunnels and print preview URLs
+        env:
+          MODE: ${{ inputs.mode }}
+          DURATION_INPUT: ${{ inputs.duration }}
+        run: |
+          set -euo pipefail
+          # Clamp the sleep: timeout-minutes must also cover provisioning.
+          DURATION=$(( DURATION_INPUT > 18000 ? 18000 : DURATION_INPUT ))
+          echo "PREVIEW_LIVE_SECONDS=$DURATION" >> "$GITHUB_ENV"
+
+          MODE="${MODE:-both}"
+          for i in $(seq 1 30); do
+            BACKEND_URL=$(grep -oE 'https://[a-zA-Z0-9-]+\.trycloudflare\.com' /tmp/tunnel-backend.log 2>/dev/null | head -1 || true)
+            FRONTEND_URL=$(grep -oE 'https://[a-zA-Z0-9-]+\.trycloudflare\.com' /tmp/tunnel-frontend.log 2>/dev/null | head -1 || true)
+            FRONTEND_DEV_URL=$(grep -oE 'https://[a-zA-Z0-9-]+\.trycloudflare\.com' /tmp/tunnel-frontend-dev.log 2>/dev/null | head -1 || true)
+            CODE_URL=$(grep -oE 'https://[a-zA-Z0-9-]+\.trycloudflare\.com' /tmp/tunnel-code.log 2>/dev/null | head -1 || true)
+            READY=1
+            [ -n "$BACKEND_URL" ] || READY=0
+            [ "$MODE" = "dev" ] || [ -n "$FRONTEND_URL" ] || READY=0
+            [ "$MODE" = "prod" ] || [ -n "$FRONTEND_DEV_URL" ] || READY=0
+            [ "$CODE_SERVER_ENABLED" != "true" ] || [ -n "$CODE_URL" ] || READY=0
+            if [ "$READY" -eq 1 ]; then break; fi
+            sleep 1
+          done
+
+          # A required tunnel that never came up should fail the job,
+          # not leave it sleeping for the full preview duration.
+          FAILED=0
+          if [ -z "$BACKEND_URL" ]; then
+            echo "::error::backend tunnel not ready"; tail -n 20 /tmp/tunnel-backend.log || true; FAILED=1
+          fi
+          if [ "$MODE" != "dev" ] && [ -z "$FRONTEND_URL" ]; then
+            echo "::error::frontend (prod) tunnel not ready"; tail -n 20 /tmp/tunnel-frontend.log || true; FAILED=1
+          fi
+          if [ "$MODE" != "prod" ] && [ -z "$FRONTEND_DEV_URL" ]; then
+            echo "::error::frontend (dev) tunnel not ready"; tail -n 20 /tmp/tunnel-frontend-dev.log || true; FAILED=1
+          fi
+          if [ "$CODE_SERVER_ENABLED" = "true" ] && [ -z "$CODE_URL" ]; then
+            echo "::error::code-server tunnel not ready"; tail -n 20 /tmp/tunnel-code.log || true; FAILED=1
+          fi
+          [ "$FAILED" -eq 0 ] || exit 1
+
+          # One-time login link: a credential, so it gets the same gate
+          # as code-server (owner mode only), not a public log.
+          LOGIN_LINK=""
+          if [ "$CODE_SERVER_ENABLED" = "true" ] && [ -n "$BACKEND_URL" ]; then
+            LOGIN_LINK=$(cd drupal && vendor/bin/drush -r "$GITHUB_WORKSPACE/drupal/web" -y uli --uri="$BACKEND_URL" 2>/dev/null || true)
+          fi
+
+          echo "=================================================="
+          if [ "$MODE" != "dev" ]; then
+            echo " Frontend (prod): ${FRONTEND_URL:-not ready - check /tmp/tunnel-frontend.log}"
+          fi
+          if [ "$MODE" != "prod" ]; then
+            echo " Frontend (dev):  ${FRONTEND_DEV_URL:-not ready - check /tmp/tunnel-frontend-dev.log}  <- HMR: edits appear live"
+          fi
+          echo " Backend:    ${BACKEND_URL:-not ready - check /tmp/tunnel-backend.log}"
+          if [ "$CODE_SERVER_ENABLED" = "true" ]; then
+            echo " Login link: ${LOGIN_LINK:-not ready}"
+            echo " Code:       ${CODE_URL:-not ready} (password: your PREVIEW_CODE_PASSWORD secret)"
+          else
+            echo " Login link: hidden - set the PREVIEW_CODE_PASSWORD secret to enable"
+            echo " Code:       disabled - set the PREVIEW_CODE_PASSWORD secret to enable"
+          fi
+          echo " Note:       tunnel URLs survive restarts on the same port."
+          echo "             prod does NOT watch files - rebuild it from a"
+          echo "             code-server terminal if you edit and want prod."
+          echo " Live for:   ${DURATION}s (cancel this workflow to stop early)"
+          echo "=================================================="
+
+      - name: Keep the preview alive
+        run: sleep "$PREVIEW_LIVE_SECONDS"

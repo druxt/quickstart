@@ -1,0 +1,17 @@
+{
+    "_hash": "b05001df975535e9eadfb1cb9f0d69c88dd77fe884a0e026fc83f95c9dae88d6",
+    "patches": {
+        "drupal/druxt": [
+            {
+                "package": "drupal/druxt",
+                "description": "Fix ViewsPathTranslatorSubscriber crash on views with no JSON:API route - https://gitlab.local/drupal/druxt/-/merge_requests/5",
+                "url": "patches/druxt-views-path-translator-route-name.patch",
+                "sha256": "be2ed18e01aed8fc4f328ba25b7bb79681a891b29540a4db52c103c783f5c3be",
+                "depth": 1,
+                "extra": {
+                    "provenance": "root"
+                }
+            }
+        ]
+    }
+}

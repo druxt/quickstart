@@ -1,0 +1,158 @@
+#!/usr/bin/env php
+<?php
+
+/**
+ * @file
+ * Provision the site: fresh standard-profile `drush site:install` against
+ * a throwaway SQLite database, enable `druxt` + `simple_oauth`, generate
+ * OAuth keys, and create a Consumer so the Nuxt frontend can authenticate.
+ *
+ * Unlike docs/drupal's `provision` (which runs `tome:install` against
+ * already-committed config/content), this repo has nothing to import —
+ * this is a fresh `site:install`, porting the exact sequence from
+ * `.ddev/commands/web/drupal-install` and
+ * `.ddev/commands/web/druxt-add-consumer` verbatim, just SQLite-backed
+ * and Docker-free.
+ *
+ * The SQLite override lives in `web/sites/default/settings.local.php`
+ * (gitignored), not `settings.php`. This repo has no committed
+ * `settings.php` at all — only `default.settings.php` — so this copies it
+ * once and enables its already-present (but commented-out)
+ * `settings.local.php` include; every subsequent `provision` run then only
+ * ever touches the gitignored file.
+ */
+
+declare(strict_types=1);
+
+namespace QuickstartDevTools;
+
+require_once __DIR__ . '/helpers.php';
+
+// -----------------------------------------------------------------------------
+// Variables.
+// -----------------------------------------------------------------------------
+
+$db_file = resolve_env_value('DB_FILE', '/tmp/quickstart-drupal-site.sqlite')[0];
+$oauth_callback = resolve_env_value('OAUTH_CALLBACK', 'http://localhost:3000/callback')[0];
+
+// -----------------------------------------------------------------------------
+
+echo '===============================' . PHP_EOL;
+echo '         🚀 PROVISION          ' . PHP_EOL;
+echo '===============================' . PHP_EOL;
+echo PHP_EOL;
+
+TASK('Preparing web/sites/default/settings.php.');
+$settings_php = 'web/sites/default/settings.php';
+if (!file_exists($settings_php)) {
+  if (!copy('web/sites/default/default.settings.php', $settings_php)) {
+    FAIL('Unable to create %s from default.settings.php.', $settings_php);
+  }
+}
+$settings_contents = (string) file_get_contents($settings_php);
+$commented_include = "#\n# if (file_exists(\$app_root . '/' . \$site_path . '/settings.local.php')) {\n#   include \$app_root . '/' . \$site_path . '/settings.local.php';\n# }\n";
+$active_include = "\nif (file_exists(\$app_root . '/' . \$site_path . '/settings.local.php')) {\n  include \$app_root . '/' . \$site_path . '/settings.local.php';\n}\n";
+if (str_contains($settings_contents, $commented_include)) {
+  file_put_contents($settings_php, str_replace($commented_include, $active_include, $settings_contents));
+}
+elseif (!str_contains($settings_contents, $active_include)) {
+  FAIL('Could not find the expected settings.local.php include block (commented or active) in %s. The file may have changed shape - update this script\'s anchor rather than skipping the patch.', $settings_php);
+}
+PASS('settings.php includes settings.local.php.');
+
+TASK('Configuring the SQLite database at %s.', $db_file);
+if (file_exists($db_file)) {
+  unlink($db_file);
+}
+// var_export() so a path containing quotes stays valid PHP.
+$db_file_php = var_export($db_file, TRUE);
+file_put_contents('web/sites/default/settings.local.php', sprintf(
+  "<?php\n\n/**\n * @file\n * Provision-only override, written fresh each run by .devtools/provision.\n * Gitignored - never committed.\n */\n\n\$databases['default']['default'] = [\n  'driver' => 'sqlite',\n  'database' => %s,\n];\n",
+  $db_file_php
+));
+PASS('SQLite database configured.');
+
+TASK('Running drush site:install standard.');
+drush('site:install standard --site-name=%s', 'quickstart-druxt-site');
+PASS('Site installed.');
+
+// Drupal 11's `standard` profile no longer creates content types itself -
+// Article and Page now ship as separate core recipes. Without them there
+// are no node bundles, so jsonapi_views can't register a route for any
+// node-based view (including the front page), and the site can't do
+// anything content-shaped.
+TASK('Applying Article and Page content-type recipes.');
+foreach (['article_content_type', 'page_content_type'] as $recipe) {
+  drush('recipe:apply %s', getcwd() . "/web/core/recipes/$recipe");
+}
+drush('cache:rebuild');
+PASS('Content types applied.');
+
+TASK('Enabling the druxt module.');
+drush('pm:enable druxt');
+drush('role:perm:add anonymous %s', 'access druxt resources');
+PASS('druxt enabled; anonymous can access Druxt resources.');
+
+TASK('Enabling and configuring simple_oauth.');
+drush('pm:enable simple_oauth');
+
+$keys_dir = getcwd() . '/keys';
+if (!is_dir($keys_dir) && !mkdir($keys_dir, 0755, TRUE) && !is_dir($keys_dir)) {
+  FAIL('Unable to create %s.', $keys_dir);
+}
+
+// Config values are relative to web/ (the docroot), matching the cwd
+// `.devtools/start` runs the webserver from - not this script's cwd.
+drush('config:set simple_oauth.settings public_key %s', '../keys/public.key');
+drush('config:set simple_oauth.settings private_key %s', '../keys/private.key');
+// The generate-keys command writes to disk immediately, so it gets an
+// absolute path rather than relying on this script's own cwd matching
+// web/'s.
+drush('simple-oauth:generate-keys %s', $keys_dir);
+PASS('simple_oauth enabled; OAuth keys generated at %s.', $keys_dir);
+
+TASK('Enabling authenticated editing via JSON:API.');
+drush('config:set jsonapi.settings read_only %s', '0');
+PASS('jsonapi.settings read_only disabled.');
+
+TASK('Creating the Druxt OAuth Consumer.');
+$client_id = generate_uuid();
+putenv('OAUTH_CLIENT_ID=' . $client_id);
+putenv('OAUTH_CALLBACK=' . $oauth_callback);
+drush('php-eval %s', <<<'PHP'
+$consumer = \Drupal\consumers\Entity\Consumer::create([
+  "owner_id"     => 1,
+  "uuid"         => getenv("OAUTH_CLIENT_ID") ?: \Drupal::service("uuid")->generate(),
+  "label"        => "Druxt",
+  "description"  => "DruxtJS is a bridge between frameworks, Drupal in the back, Nuxt in the front.\n\nhttps://druxtjs.org",
+  "confidential" => FALSE,
+  "pkce"         => TRUE,
+  "redirect"     => getenv("OAUTH_CALLBACK") ?: "http://localhost:3000/callback",
+]);
+$consumer->save();
+PHP);
+dotenv_write_var('OAUTH_CLIENT_ID', $client_id);
+PASS('Consumer created (client ID %s); OAUTH_CLIENT_ID written to ../.env.', $client_id);
+
+echo PHP_EOL;
+echo '===============================' . PHP_EOL;
+echo '   🚀 PROVISION COMPLETE  ✅  ' . PHP_EOL;
+echo '===============================' . PHP_EOL;
+echo PHP_EOL;
+echo 'Database: ' . $db_file . PHP_EOL;
+echo 'Client ID: ' . $client_id . PHP_EOL;
+echo PHP_EOL;
+echo '> Next steps:' . PHP_EOL;
+echo '  .devtools/start    # Start the webserver' . PHP_EOL;
+echo PHP_EOL;
+
+/**
+ * Generate a random UUID (v4).
+ */
+function generate_uuid(): string {
+  $data = random_bytes(16);
+  $data[6] = chr((ord($data[6]) & 0x0f) | 0x40);
+  $data[8] = chr((ord($data[8]) & 0x3f) | 0x80);
+
+  return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($data), 4));
+}
