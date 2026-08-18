@@ -70,7 +70,7 @@ jobs:
               rc=1
             fi
           done < <(find . -name '*.json' -not -path '*/.git/*' -not -path '*/node_modules/*' \
-            -not -path '*/nuxt/*' -not -path '*/drupal/*' -not -path '*/.vscode/*' -print0)
+            -not -path '*/nuxt/*' -not -path '*/drupal/*' -not -path '*/.vscode/*' -not -path '*/.devcontainer/*' -print0)
           echo "--- $count JSON file(s) checked ---"
           exit "$rc"
 
