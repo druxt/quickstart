@@ -143,7 +143,13 @@ jobs:
         run: |
           set -euo pipefail
           # Clamp the sleep: timeout-minutes must also cover provisioning.
-          DURATION=$(( DURATION_INPUT > 18000 ? 18000 : DURATION_INPUT ))
+          # Sanitize first: GitHub does not strictly validate `type: number`,
+          # and bash arithmetic expands variable contents recursively - a
+          # crafted value like `1+$(...)` would execute inside $(( )).
+          # Same tr -cd guard the GitLab preview job already uses.
+          DURATION=$(printf '%s\n' "$DURATION_INPUT" | tr -cd '0-9')
+          DURATION=${DURATION:-3600}
+          [ "$DURATION" -le 18000 ] || DURATION=18000
           echo "PREVIEW_LIVE_SECONDS=$DURATION" >> "$GITHUB_ENV"
 
           MODE="${MODE:-both}"

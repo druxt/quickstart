@@ -12,6 +12,12 @@
     "ghcr.io/devcontainers-extra/features/mise:1": {},
     "ghcr.io/devcontainers/features/github-cli:1": {}
   },
+  // Pin the backend port: .devtools/start otherwise auto-discovers the
+  // first free port from 8888 up, and a container that picked 8889 would
+  // sit behind a forward that only maps 8888.
+  "containerEnv": {
+    "WEBSERVER_PORT": "8888"
+  },
   "forwardPorts": [8888, 3000],
   "portsAttributes": {
     "8888": {

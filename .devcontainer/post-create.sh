@@ -47,6 +47,11 @@ tar -xzf /tmp/php-src.tar.gz -C "$GD_BUILD_DIR" --strip-components=3 "php-${PHP_
 rm -rf "$GD_BUILD_DIR" /tmp/php-src.tar.gz
 echo 'extension=gd' | sudo tee "$CONF_DIR/gd.ini" > /dev/null
 
+# Fail fast if the gd build above didn't actually take - composer and
+# Drupal's installer both hard-require it, and a broken build surfacing
+# here beats a confusing failure mid-provision.
+php -r "exit(extension_loaded('gd') ? 0 : 1);" || { echo "gd extension failed to load" >&2; exit 1; }
+
 echo "==> Trusting this repo's mise.toml"
 mise trust
 

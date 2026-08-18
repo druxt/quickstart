@@ -1,4 +1,4 @@
-/* global before, it, cy */
+/* global before, it, cy, expect */
 
 const TITLE = 'Druxt quickstart test article'
 
@@ -22,7 +22,7 @@ before(() => {
     // any other content exists) allocates a higher one, so read the path
     // back from the command instead of assuming.
     const match = stdout.match(/\(node\/(\d+)\)/)
-    expect(match, `seed output should report the created node path, got: ${stdout}`).to.not.be.null
+    expect(match, `seed output should report the created node path, got: ${stdout}`).to.not.equal(null)
     nodePath = `/node/${match[1]}`
   })
 })
