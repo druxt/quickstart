@@ -64,6 +64,6 @@
     }
   },
   "postCreateCommand": "bash .devcontainer/post-create.sh",
-  "postAttachCommand": "code --install-extension ${containerWorkspaceFolder}/.devcontainer/extensions/quickstart-guide/quickstart-guide-1.0.0.vsix || true",
+  "postAttachCommand": "bash .devcontainer/install-guide-extension.sh",
   "remoteUser": "vscode"
 }
