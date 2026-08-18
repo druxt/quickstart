@@ -21,10 +21,15 @@ it('Article page', () => {
   // Given I visit the seeded Article at its default (un-aliased) route.
   cy.visit('/node/1')
 
-  // Expect the entity to render inside the page's content region, with
-  // its title and body - proof that a real Drupal entity survives the
-  // full JSON:API -> DruxtRouter -> DruxtEntity round trip.
+  // Expect the page title to be the entity's title - the "Full content"
+  // display mode hides the title field itself (Olivero's page title
+  // block/breadcrumb render it instead, not the content region), so
+  // <title> is the real assertion, not a substitute for one.
+  cy.title().should('eq', TITLE)
+
+  // Expect the entity's body to render inside the page's content region -
+  // proof that a real Drupal entity survives the full JSON:API ->
+  // DruxtRouter -> DruxtEntity round trip.
   cy.get('div[blocks][name="content"]').should('exist')
-    .should('contain.text', TITLE)
     .should('contain.text', 'Seeded by .devtools/seed-test-content')
 })
