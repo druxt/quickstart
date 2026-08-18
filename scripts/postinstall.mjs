@@ -18,7 +18,14 @@
  *   and the README instead of a failed install.
  */
 
-import { SPLASH, miseAvailable, printCommands, readEnv, toolAvailable } from './lib.mjs'
+import {
+  SPLASH,
+  backendInfo,
+  miseAvailable,
+  printCommands,
+  readEnv,
+  toolAvailable,
+} from './lib.mjs'
 import { runSetup } from './setup.mjs'
 
 function printNextSteps(hint) {
@@ -56,7 +63,12 @@ async function main() {
     return
   }
 
-  if (!toolAvailable('php') || !toolAvailable('composer')) {
+  // External/DDEV backend: setup is frontend-only (npm install in nuxt/),
+  // which needs neither PHP nor Composer - never block it on them.
+  const backend = backendInfo(env)
+  const externalBackend = backend.url && !backend.managed
+
+  if (!externalBackend && (!toolAvailable('php') || !toolAvailable('composer'))) {
     console.log('  Node side ready. The backend needs PHP 8.4 + Composer (or DDEV).')
     console.log('')
     printNextSteps(

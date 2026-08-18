@@ -258,7 +258,13 @@ function stop_webserver(string $port): void {
   if (is_file($pid_file)) {
     $pid = trim((string) file_get_contents($pid_file));
     if ($pid !== '' && ctype_digit($pid)) {
-      @exec(sprintf('kill -9 %d 2>/dev/null', (int) $pid));
+      // A stale pidfile can name a PID the OS has since reused for an
+      // unrelated process - only signal it if it still looks like the
+      // PHP dev server this tooling started.
+      $command = trim((string) @shell_exec(sprintf('ps -p %d -o command= 2>/dev/null', (int) $pid)));
+      if ($command !== '' && str_contains($command, 'php') && str_contains($command, '-S')) {
+        @exec(sprintf('kill -9 %d 2>/dev/null', (int) $pid));
+      }
     }
     @unlink($pid_file);
   }

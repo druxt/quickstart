@@ -122,7 +122,14 @@ jobs:
           set -euo pipefail
           CODE_SERVER_ENABLED=false
           if [ -n "${PREVIEW_CODE_PASSWORD:-}" ]; then
-            curl -fsSL https://code-server.dev/install.sh | sh -s -- --version "$CODE_SERVER_VERSION"
+            # Pinned .deb + SHA-256, not the mutable install.sh - the
+            # installer script runs with PREVIEW_CODE_PASSWORD in its
+            # environment, so a changed upstream script must never
+            # execute here. Update both together when bumping the version.
+            CODE_SERVER_DEB_SHA256="18e0e69920ab23b725cb219fb42bc045a908421448cf496a3124314e1a02bcf1"
+            curl -fsSL --max-time 120 "https://github.com/coder/code-server/releases/download/${CODE_SERVER_VERSION}/code-server_${CODE_SERVER_VERSION#v}_amd64.deb" -o /tmp/code-server.deb
+            echo "${CODE_SERVER_DEB_SHA256}  /tmp/code-server.deb" | sha256sum -c - || { echo "code-server checksum mismatch" >&2; exit 1; }
+            sudo dpkg -i /tmp/code-server.deb
             PASSWORD="$PREVIEW_CODE_PASSWORD" nohup code-server --auth password --bind-addr 0.0.0.0:8080 "$GITHUB_WORKSPACE" > /tmp/code-server.log 2>&1 &
             nohup cloudflared tunnel --url http://localhost:8080 > /tmp/tunnel-code.log 2>&1 &
             CODE_SERVER_ENABLED=true
@@ -171,13 +178,6 @@ jobs:
           fi
           [ "$FAILED" -eq 0 ] || exit 1
 
-          # One-time login link: a credential, so it gets the same gate
-          # as code-server (owner mode only), not a public log.
-          LOGIN_LINK=""
-          if [ "$CODE_SERVER_ENABLED" = "true" ] && [ -n "$BACKEND_URL" ]; then
-            LOGIN_LINK=$(cd drupal && vendor/bin/drush -r "$GITHUB_WORKSPACE/drupal/web" -y uli --uri="$BACKEND_URL" 2>/dev/null || true)
-          fi
-
           echo "=================================================="
           if [ "$MODE" != "dev" ]; then
             echo " Frontend (prod): ${FRONTEND_URL:-not ready - check /tmp/tunnel-frontend.log}"
@@ -187,10 +187,13 @@ jobs:
           fi
           echo " Backend:    ${BACKEND_URL:-not ready - check /tmp/tunnel-backend.log}"
           if [ "$CODE_SERVER_ENABLED" = "true" ]; then
-            echo " Login link: ${LOGIN_LINK:-not ready}"
+            # No login link in the log: `drush uli` output is a live
+            # credential, and job logs are readable by more people than
+            # you think even in owner mode. Get one from the code-server
+            # terminal instead - it never touches the log there.
+            echo " Login link: run \`make drush uli\` in a code-server terminal"
             echo " Code:       ${CODE_URL:-not ready} (password: your PREVIEW_CODE_PASSWORD secret)"
           else
-            echo " Login link: hidden - set the PREVIEW_CODE_PASSWORD secret to enable"
             echo " Code:       disabled - set the PREVIEW_CODE_PASSWORD secret to enable"
           fi
           echo " Note:       tunnel URLs survive restarts on the same port."
