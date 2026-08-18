@@ -4,6 +4,15 @@ const baseUrl = process.env.BASE_URL || ''
 export default {
   target: process.env.NUXT_TARGET,
 
+  // Nuxt 2 defaults to binding 'localhost' (loopback only), which is not
+  // reachable through devcontainer/DevPod port forwarding - the forwarded
+  // port maps to the container's network interface, not its loopback.
+  // https://v2.nuxt.com/docs/configuration-glossary/configuration-server/
+  server: {
+    host: process.env.HOST || '0.0.0.0',
+    port: process.env.PORT || 3000
+  },
+
   // Global page headers: https://go.nuxtjs.dev/config-head
   head: {
     title: 'quickstart-druxt-site',
