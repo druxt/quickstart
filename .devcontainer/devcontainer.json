@@ -31,6 +31,15 @@
   },
   "customizations": {
     "vscode": {
+      "settings": {
+        // Absolute path to where the mise feature installs the binary
+        // (gh-release feature default binLocation). The extension's
+        // default bare "mise" value trips its workspace-binary security
+        // check - a bare name is treated as workspace-relative, fails
+        // to hash (ENOENT), and re-prompts for approval on every config
+        // reload. An absolute machine-scope path never prompts.
+        "mise.binPath": "/usr/local/bin/mise"
+      },
       "extensions": [
         "hverlin.mise-vscode",
         "davidanson.vscode-markdownlint",
