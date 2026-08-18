@@ -22,7 +22,11 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          # 22, not this repo's pinned 16 (or the other jobs' 20) - the
+          # lint tools themselves need it: cspell requires >=22.18.0,
+          # markdownlint-cli2 >=22, commitlint >=22.12.0. This job only
+          # runs root-level tooling, never touches the app's own runtime.
+          node-version: '22'
           cache: 'npm'
 
       - run: npm install

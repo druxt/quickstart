@@ -20,7 +20,11 @@ cache:
 # needs PHP/Composer or nuxt/'s own dependencies, so it stays off the
 # heavier .php-node-setup image entirely.
 .node-lint:
-  image: node:20
+  # 22, not this repo's pinned 16 (or test_extension's 20) - the lint
+  # tools themselves need it: cspell requires >=22.18.0, markdownlint-cli2
+  # >=22, commitlint >=22.12.0. This template only runs root-level
+  # tooling, never touches the app's own runtime.
+  image: node:22
   cache:
     key:
       files:

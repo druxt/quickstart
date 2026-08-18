@@ -7,7 +7,14 @@ before(() => {
   // intentionally empty (see homepage.cy.js), so this spec provisions its
   // own content rather than relying on any. Marked non-promoted, so it
   // never appears on the front page and can't affect that spec either way.
-  cy.exec('php .devtools/seed-test-content', { cwd: '../drupal' })
+  //
+  // cy.exec() has no `cwd` option - it always runs from the Cypress
+  // project root (nuxt/, where cypress.config.js lives). But
+  // .devtools/seed-test-content itself needs its cwd to actually be
+  // drupal/ (it resolves vendor/, web/ relative to its own working
+  // directory, like every .devtools/ script) - `cd && php ...` gets
+  // both right in one shell invocation.
+  cy.exec('cd ../drupal && php .devtools/seed-test-content')
 })
 
 it('Article page', () => {
