@@ -16,7 +16,14 @@
   // first free port from 8888 up, and a container that picked 8889 would
   // sit behind a forward that only maps 8888.
   "containerEnv": {
-    "WEBSERVER_PORT": "8888"
+    "WEBSERVER_PORT": "8888",
+    // Node and PHP are provided by the devcontainer features above -
+    // mise.toml's pins are for host users. Without this, `mise install`
+    // (including the mise extension's missing-tools check) tries to
+    // BUILD PHP from source via the vfox-php plugin inside the
+    // container, which is slow, redundant, and fails on missing build
+    // deps (gdlib). mise tasks (`mise run setup` etc.) are unaffected.
+    "MISE_DISABLE_TOOLS": "node,php"
   },
   "forwardPorts": [8888, 3000],
   "portsAttributes": {
