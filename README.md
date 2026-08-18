@@ -137,11 +137,11 @@ In a Development Container (VS Code, Codespaces, DevPod), forwarded ports are ac
 
 ## Services
 
-| Port   | Service   |
-| ------ | --------- |
-| `3000` | Nuxt.js   |
-| `3003` | Storybook |
-| `8080` | Drupal    |
+| Port   | Service                                                                               |
+| ------ | ------------------------------------------------------------------------------------- |
+| `3000` | Nuxt.js                                                                               |
+| `3003` | Storybook                                                                             |
+| `8888` | Drupal (local `.devtools` backend - DDEV serves at its own `*.ddev.site` URL instead) |
 
 ## Tools
 

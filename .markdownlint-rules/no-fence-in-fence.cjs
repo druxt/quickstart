@@ -12,7 +12,11 @@
 // skipped here.
 'use strict'
 
-const FENCE = /^(\s*)(`{3,}|~{3,})(\S*)\s*$/
+// CommonMark allows whitespace between the fence marker and the info
+// string ("``` bash"), and the info string itself may be multi-word -
+// `.*` + trim covers both, so a space-separated opener can't slip past
+// the rule's fence-state tracking unmatched.
+const FENCE = /^(\s*)(`{3,}|~{3,})(.*)$/
 
 module.exports = {
   names: ['local/no-fence-in-fence'],
@@ -27,10 +31,18 @@ module.exports = {
       if (!match) {
         return
       }
-      const [, , marker, info] = match
+      const marker = match[2]
+      const info = match[3].trim()
+      // CommonMark: a backtick fence's info string may not contain
+      // backticks - such a line is inline code, not a fence.
+      if (marker[0] === '`' && info.includes('`')) {
+        return
+      }
+      // First word of the info string is the language.
+      const language = (info.split(/\s+/)[0] || '').toLowerCase()
 
       if (!open) {
-        open = { char: marker[0], length: marker.length, info: info.toLowerCase() }
+        open = { char: marker[0], length: marker.length, language }
         return
       }
 
@@ -43,10 +55,10 @@ module.exports = {
       // Anything fence-like WITH a language while a fence is open is
       // content - and almost certainly a mistake, unless the outer
       // fence says it contains markdown.
-      if (info !== '' && !['markdown', 'md'].includes(open.info)) {
+      if (info !== '' && !['markdown', 'md'].includes(open.language)) {
         onError({
           lineNumber: index + 1,
-          detail: `"${marker}${info}" is inside an open ${open.char.repeat(open.length)}${open.info} fence - a mangled opener/closer pair renders the prose after it as code`,
+          detail: `"${marker}${info}" is inside an open ${open.char.repeat(open.length)}${open.language} fence - a mangled opener/closer pair renders the prose after it as code`,
         })
       }
     })

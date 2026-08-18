@@ -280,7 +280,11 @@ function stop_webserver(string $port): void {
  * Path of the pidfile tracking the dev webserver process.
  */
 function server_pid_file(): string {
-  return '/tmp/quickstart-drupal-php-server.pid';
+  // Unique per checkout: a fixed name is shared by every clone of this
+  // repo on the machine, letting one checkout's `stop` kill another
+  // checkout's server (the pidfile written last wins). cwd is stable
+  // here - every .devtools script runs from drupal/.
+  return sprintf('/tmp/quickstart-drupal-php-server-%s.pid', substr(md5((string) getcwd()), 0, 8));
 }
 
 /**

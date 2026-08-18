@@ -40,6 +40,7 @@
         "bmewburn.vscode-intelephense-client",
         "ValeryanM.vscode-phpsab",
         "SanderRonde.phpstan-vscode",
+        "xdebug.php-debug",
         "Stanislav.vscode-drupal",
         "Vue.volar",
         "dbaeumer.vscode-eslint"

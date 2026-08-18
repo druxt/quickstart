@@ -61,6 +61,25 @@ export function readEnv() {
 }
 
 /**
+ * The hostname this repo's own DDEV project serves at, read from
+ * drupal/.ddev/config.yaml - or null if there is no DDEV config.
+ *
+ * Used to reject a *.ddev.site BASE_URL that names some OTHER DDEV
+ * project: `ddev drush` always targets the project in drupal/, so a
+ * mismatched BASE_URL would silently run commands against the wrong
+ * site.
+ */
+export function ddevProjectHost() {
+  try {
+    const config = fs.readFileSync(path.join(DRUPAL_DIR, '.ddev', 'config.yaml'), 'utf8')
+    const match = config.match(/^name:\s*(\S+)\s*$/m)
+    return match ? `${match[1]}.ddev.site` : null
+  } catch {
+    return null
+  }
+}
+
+/**
  * Classify the backend that BASE_URL points at.
  *
  * `managed: true` means a loopback URL - the PHP built-in server run by

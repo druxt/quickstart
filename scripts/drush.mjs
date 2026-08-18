@@ -5,7 +5,7 @@
 
 import fs from 'node:fs'
 import path from 'node:path'
-import { DRUPAL_DIR, backendInfo, exitWithError, run } from './lib.mjs'
+import { DRUPAL_DIR, backendInfo, exitWithError, ddevProjectHost, run } from './lib.mjs'
 
 const drushArgs = process.argv.slice(2)
 
@@ -19,6 +19,15 @@ try {
   }
 
   if (backend.ddev) {
+    // `ddev drush` always targets the project in drupal/ - reject a
+    // BASE_URL naming some OTHER DDEV project before running commands
+    // against the wrong site.
+    const expected = ddevProjectHost()
+    if (expected && backend.host !== expected) {
+      exitWithError(
+        `BASE_URL (${backend.url}) names a different DDEV project than drupal/.ddev/config.yaml (${expected}) - refusing to run against the wrong site.`
+      )
+    }
     // Inside DDEV, drush must run in the container.
     run('ddev', ['drush', ...drushArgs], { cwd: DRUPAL_DIR })
   } else {

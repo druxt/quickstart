@@ -21,4 +21,6 @@ treats anything starting with `-` as its own flag before your Makefile ever
 sees it, so flag-style Drush arguments (`--field=...`) need `npm run drush --`
 or `mise run drush` instead.
 
-`mise install` (or `nvm use`) pins the Node and PHP versions this repo uses, if you have mise or nvm installed.
+`mise install` pins both the Node and PHP versions this repo uses. nvm
+users: `nvm use` pins Node only - install PHP 8.4 (with pdo_sqlite)
+separately.
