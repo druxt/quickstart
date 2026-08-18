@@ -14,8 +14,31 @@
     "provision": "node scripts/devtools.mjs provision",
     "devtools": "node scripts/devtools.mjs",
     "login": "node scripts/login.mjs",
+    "drush": "node scripts/drush.mjs",
+    "xdebug": "node scripts/xdebug.mjs",
     "info": "node scripts/info.mjs",
     "reset": "node scripts/reset.mjs",
-    "postinstall": "node scripts/postinstall.mjs"
+    "postinstall": "node scripts/postinstall.mjs",
+    "lint:js": "eslint scripts .devcontainer/extensions/*/test.mjs",
+    "lint:format": "prettier --check \"**/*.{js,mjs,json,md,yml,yaml}\"",
+    "lint:format:fix": "prettier --write \"**/*.{js,mjs,json,md,yml,yaml}\"",
+    "lint:cspell": "cspell lint --no-progress --no-must-find-files --gitignore --dot \"**/*.{js,mjs,json,md,yml,yaml}\"",
+    "lint:md": "markdownlint-cli2 \"**/*.md\"",
+    "lint:knip": "knip --include dependencies,unlisted --no-config-hints",
+    "lint:commit": "commitlint",
+    "lint:audit": "npm audit --omit=dev --audit-level=high",
+    "lint:renovate": "npx --yes --package renovate renovate-config-validator"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^21.2.2",
+    "@commitlint/config-conventional": "^21.2.2",
+    "@eslint/js": "^10.0.1",
+    "cspell": "^10.0.1",
+    "eslint": "^10.1.8",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.11.0",
+    "knip": "^6.32.2",
+    "markdownlint-cli2": "^0.23.2",
+    "prettier": "^3.9.6"
   }
 }

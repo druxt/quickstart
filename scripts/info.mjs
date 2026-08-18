@@ -24,8 +24,7 @@ if (backend.ddev) {
   } catch {
     console.error('(run `ddev describe` from drupal/ for backend details)')
   }
-}
-else {
+} else {
   if (backend.url) {
     console.log('Backend')
     console.log('=======')

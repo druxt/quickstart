@@ -40,6 +40,10 @@ run = "npm run provision"
 description = "Print a Drupal one-time login link."
 run = "npm run login"
 
+[tasks.xdebug]
+description = "Enable XDebug step-debugging on the local backend."
+run = "npm run xdebug"
+
 [tasks.info]
 description = "Print a summary of the current environment."
 run = "npm run info"
@@ -50,4 +54,4 @@ run = "npm run reset"
 
 [tasks.drush]
 description = "Run a Drush command, e.g. mise run drush cr all."
-run = "drupal/vendor/bin/drush -r drupal/web"
+run = "npm run drush --"

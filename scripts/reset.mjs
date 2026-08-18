@@ -16,7 +16,9 @@ try {
   const backend = backendInfo()
 
   if (backend.url && !backend.managed) {
-    console.log(`Backend ${backend.url} is external (${backend.ddev ? 'DDEV' : 'remote'}) - reset it with its own tooling.`)
+    console.log(
+      `Backend ${backend.url} is external (${backend.ddev ? 'DDEV' : 'remote'}) - reset it with its own tooling.`
+    )
     if (backend.ddev) {
       console.log('From drupal/: ddev drupal-install && ddev druxt-add-consumer')
     }

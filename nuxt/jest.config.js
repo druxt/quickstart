@@ -15,5 +15,9 @@ module.exports = {
     '<rootDir>/components/**/*.vue',
     '<rootDir>/pages/**/*.vue',
   ],
+  // clover.xml: Codecov (GitHub Actions). cobertura: GitLab's native MR
+  // coverage visualization (coverage_report artifact in .gitlab-ci.yml).
+  // text: the coverage: regex both CI files use for the summary percentage.
+  coverageReporters: ['clover', 'cobertura', 'lcov', 'text'],
   testEnvironment: 'jsdom',
 }

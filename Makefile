@@ -1,6 +1,6 @@
 SHELL=/bin/bash
 
-.PHONY: help setup dev build start stop assemble provision login info reset drush
+.PHONY: help setup dev build start stop assemble provision login xdebug info reset drush
 
 help:
 	@echo "COMMANDS"
@@ -13,6 +13,7 @@ help:
 	@echo "assemble   - Install Composer dependencies (backend)."
 	@echo "provision  - Install the site: SQLite, druxt, simple_oauth, OAuth consumer."
 	@echo "login      - Print a Drupal one-time login link."
+	@echo "xdebug     - Enable XDebug step-debugging on the local backend."
 	@echo "info       - Print a summary of the current environment."
 	@echo "reset      - Stop the backend and wipe the throwaway SQLite database."
 	@echo "drush      - Run a Drush command, e.g. make drush cr all."
@@ -43,19 +44,22 @@ provision:
 login:
 	npm run login
 
+xdebug:
+	npm run xdebug
+
 info:
 	npm run info
 
 reset:
 	npm run reset
 
-# Pass arguments through to drupal/'s own drush target: make drush cr all
+# Pass arguments through to npm run drush: make drush cr all
 ifeq (drush,$(firstword $(MAKECMDGOALS)))
   DRUSH_RUN_ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
   $(eval $(DRUSH_RUN_ARGS):;@:)
 endif
 
 drush:
-	$(MAKE) -C drupal drush $(DRUSH_RUN_ARGS)
+	npm run drush -- $(DRUSH_RUN_ARGS)
 
 .DEFAULT_GOAL := help

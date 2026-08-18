@@ -1,0 +1,4 @@
+nuxt/
+drupal/
+.devcontainer/extensions/*/*.vsix
+package-lock.json

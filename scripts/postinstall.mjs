@@ -59,7 +59,11 @@ async function main() {
   if (!toolAvailable('php') || !toolAvailable('composer')) {
     console.log('  Node side ready. The backend needs PHP 8.4 + Composer (or DDEV).')
     console.log('')
-    printNextSteps(miseAvailable() ? '    Install them (mise users: `mise install`), then:' : '    Install them, then:')
+    printNextSteps(
+      miseAvailable()
+        ? '    Install them (mise users: `mise install`), then:'
+        : '    Install them, then:'
+    )
     return
   }
 

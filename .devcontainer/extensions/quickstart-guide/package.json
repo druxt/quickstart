@@ -1,0 +1,65 @@
+{
+  "name": "quickstart-guide",
+  "displayName": "Druxt Quickstart Guide",
+  "description": "Getting started guide for the Druxt Quickstart starter-kit",
+  "version": "1.0.0",
+  "publisher": "druxt",
+  "private": true,
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/druxt/quickstart"
+  },
+  "scripts": {
+    "test": "node test.mjs"
+  },
+  "engines": {
+    "vscode": "^1.74.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "contributes": {
+    "walkthroughs": [
+      {
+        "id": "druxtQuickstartGuide",
+        "title": "Druxt Quickstart",
+        "description": "Fully decoupled Drupal 11 + Nuxt 2 starter-kit - get oriented in a few steps.",
+        "steps": [
+          {
+            "id": "welcome",
+            "title": "What is this?",
+            "description": "A quick orientation before you start.",
+            "media": {
+              "markdown": "media/welcome.md"
+            }
+          },
+          {
+            "id": "develop",
+            "title": "Start developing",
+            "description": "Run the frontend and see your changes live.",
+            "media": {
+              "markdown": "media/develop.md"
+            }
+          },
+          {
+            "id": "commands",
+            "title": "Commands reference",
+            "description": "Every command, three ways: npm, make, mise.",
+            "media": {
+              "markdown": "media/commands.md"
+            }
+          },
+          {
+            "id": "docs",
+            "title": "Learn more",
+            "description": "Where to go next.",
+            "media": {
+              "markdown": "media/docs.md"
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

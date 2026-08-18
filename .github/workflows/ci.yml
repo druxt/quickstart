@@ -9,6 +9,119 @@ permissions:
   contents: read
 
 jobs:
+  # Root-level tooling only (package.json at the repo root) - none of this
+  # needs PHP/Composer or nuxt/'s own dependencies.
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 2
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - run: npm install
+
+      - name: ESLint (scripts/)
+        run: npm run lint:js
+
+      - name: Prettier
+        run: npm run lint:format
+
+      - name: cspell
+        run: npm run lint:cspell
+
+      - name: markdownlint
+        run: npm run lint:md
+
+      - name: knip (unused/unlisted dependencies)
+        run: npm run lint:knip
+
+      - name: npm audit (production dependencies)
+        run: npm run lint:audit
+
+      - name: renovate-config-validator
+        run: npm run lint:renovate
+
+      # Only checks the most recent commit - good enough to catch the
+      # common case (a single non-conforming commit message) without the
+      # complexity of resolving a full PR commit range.
+      - name: commitlint
+        run: npx commitlint --from HEAD~1 --to HEAD --verbose
+
+      - name: JSON sweep
+        run: |
+          rc=0; count=0
+          while IFS= read -r -d '' f; do
+            count=$((count + 1))
+            if python3 -m json.tool "$f" > /dev/null 2>&1; then
+              echo "  [PASS] $f"
+            else
+              echo "  [FAIL] $f"
+              rc=1
+            fi
+          done < <(find . -name '*.json' -not -path '*/.git/*' -not -path '*/node_modules/*' \
+            -not -path '*/nuxt/*' -not -path '*/drupal/*' -not -path '*/.vscode/*' -print0)
+          echo "--- $count JSON file(s) checked ---"
+          exit "$rc"
+
+      - name: Shell syntax sweep
+        run: |
+          rc=0; count=0
+          while IFS= read -r -d '' f; do
+            count=$((count + 1))
+            if bash -n "$f" 2>/dev/null; then
+              echo "  [PASS] $f"
+            else
+              echo "  [FAIL] $f"
+              rc=1
+            fi
+          done < <(find . -name '*.sh' -not -path '*/.git/*' -not -path '*/node_modules/*' \
+            -not -path '*/nuxt/*' -not -path '*/drupal/*' -print0)
+          echo "--- $count shell file(s) checked ---"
+          exit "$rc"
+
+      - name: yamllint
+        run: |
+          pip install yamllint -q
+          yamllint -d "{extends: default, rules: {line-length: {max: 200, level: warning}}}" .gitlab-ci.yml .github/workflows/ci.yml
+
+      # Prose-quality lint for README.md and this repo's bundled VS Code
+      # walkthrough content - see .vale.ini for scoping/exceptions.
+      - name: Install Vale
+        run: |
+          vale_version="3.17.1"
+          vale_sha256="db947f89f2292e6a0381a61de155f6a5f5cb4cb460ca178ea412ef605559cefd"
+          curl -sL --max-time 60 "https://github.com/vale-cli/vale/releases/download/v${vale_version}/vale_${vale_version}_Linux_64-bit.tar.gz" -o /tmp/vale.tar.gz
+          echo "${vale_sha256}  /tmp/vale.tar.gz" | sha256sum -c - || { echo "vale checksum mismatch" >&2; exit 1; }
+          sudo tar -xzf /tmp/vale.tar.gz -C /usr/local/bin vale
+          sudo chmod +x /usr/local/bin/vale
+
+      - name: Install ai-tells style package
+        run: |
+          ai_tells_version="1.31.0"
+          ai_tells_sha256="bc1267248f13e65928475c439ad7ae1bf806a20d09254c08d7d8c4a9c8b811f0"
+          curl -sL --max-time 60 "https://github.com/tbhb/vale-ai-tells/releases/download/v${ai_tells_version}/ai-tells.zip" -o /tmp/ai-tells.zip
+          echo "${ai_tells_sha256}  /tmp/ai-tells.zip" | sha256sum -c - || { echo "ai-tells checksum mismatch" >&2; exit 1; }
+          python3 -c "
+          import zipfile, os
+          with zipfile.ZipFile('/tmp/ai-tells.zip') as z:
+              for name in z.namelist():
+                  if name.startswith('ai-tells/styles/') and not name.endswith('/'):
+                      target = os.path.join('styles', name[len('ai-tells/styles/'):])
+                      os.makedirs(os.path.dirname(target), exist_ok=True)
+                      with open(target, 'wb') as f:
+                          f.write(z.read(name))
+          "
+
+      - name: Vale
+        run: vale README.md .devcontainer/extensions/quickstart-guide/media/*.md
+
   build:
     runs-on: ubuntu-latest
     steps:
@@ -60,6 +173,23 @@ jobs:
           files: ./nuxt/coverage/clover.xml
           name: codecov-umbrella
           fail_ci_if_error: false
+
+  # No PHP/Composer/npm install needed - the extension is pure declarative
+  # JSON + markdown, and test.mjs uses only Node's own built-in modules.
+  test_extension:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Validate the quickstart guide extension
+        run: node .devcontainer/extensions/quickstart-guide/test.mjs
 
   test_e2e:
     needs: build

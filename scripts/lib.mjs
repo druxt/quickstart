@@ -207,8 +207,8 @@ export function foreground(command, args, { cwd, env } = {}) {
  * must always be started from drupal/. Going through `php` (rather than
  * the shebang) also keeps them working on Windows.
  */
-export function runDevtools(script, args = []) {
-  return run('php', [`.devtools/${script}`, ...args], { cwd: DRUPAL_DIR })
+export function runDevtools(script, args = [], { env } = {}) {
+  return run('php', [`.devtools/${script}`, ...args], { cwd: DRUPAL_DIR, env })
 }
 
 /**
@@ -273,7 +273,8 @@ export async function ensureBackend() {
   if (!up) {
     console.error(`Backend did not come up at ${backend.url}`)
     console.error('Log: /tmp/quickstart-drupal-php-server.log')
-    process.exit(1)  }
+    process.exit(1)
+  }
 
   console.log(`Backend (started): ${backend.url}`)
   console.log('')

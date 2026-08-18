@@ -4,7 +4,8 @@
 
 Druxt Quickstart provides a Drupal and Nuxt mono-repo to get you started with DruxtJS power decoupled Drupal development.
 
-This repostory provides a quickstart installation of:
+This repository includes:
+
 - Drupal 11
 - Nuxt 2
 - Druxt 1
@@ -21,7 +22,6 @@ npm run dev
 local Drupal 11 + SQLite backend. Needs PHP 8.4 and Composer on `PATH`.
 Without them, it installs the frontend only and prints the next steps.
 
-
 ## Theme branches
 
 Start quicker with a pre-installed UI Framework.
@@ -29,10 +29,10 @@ Start quicker with a pre-installed UI Framework.
 - [BootstrapVue](https://github.com/druxt/quickstart/tree/theme/bootstrap-vue)
 - [TailwindCSS](https://github.com/druxt/quickstart/tree/theme/tailwindcss)
 
-
 ## Getting started
 
 Requires [Node 16](.nvmrc) and one of:
+
 - PHP 8.4 (with the pdo_sqlite extension) + Composer on your machine
   (Drush comes with the backend - no global install needed), or
 - [DDEV](https://ddev.readthedocs.io) (Docker)
@@ -45,7 +45,7 @@ Requires [Node 16](.nvmrc) and one of:
 1. Create your repository from this template (or clone it), then from
    the repository root:
 
-   ```bash
+   ````bash
    npm run setup
    ```bash
 
@@ -56,15 +56,18 @@ Requires [Node 16](.nvmrc) and one of:
    `make setup` works too, as do `make dev`, `make login`, `make info`,
    `make reset`, etc.
 
+   ````
+
 2. Start developing:
 
-   ```bash
+   ````bash
    npm run dev
    ```bash
 
    - Drupal backend: http://127.0.0.1:8888
    - Nuxt frontend: http://localhost:3000
    - One-time Drupal login: `npm run login`
+   ````
 
 `npm run dev` and `npm run start` automatically start the local backend
 if it is not already running, and leave external backends alone.
@@ -81,16 +84,18 @@ Using DDEV? Keep `BASE_URL` as the `*.ddev.site` URL in `.env`
 
 1. Frontend (from repository root):
 
-   ```bash
+   ````bash
    npm run setup
    ```bash
 
    Detecting the DDEV `BASE_URL`, this installs the frontend only and
    prints the backend steps.
 
+   ````
+
 2. Backend (from `drupal/`):
 
-   ```bash
+   ````bash
    ddev start
    ddev drupal-install
    ddev druxt-add-consumer
@@ -99,9 +104,10 @@ Using DDEV? Keep `BASE_URL` as the `*.ddev.site` URL in `.env`
    `druxt-add-consumer` prints `OAUTH_CLIENT_ID=...` — copy it into
    `.env`.
 
+   ````
+
 3. `npm run dev` as above. The DDEV backend is never auto-started or
    auto-stopped from the npm scripts.
-
 
 ### Development Container (VS Code, Codespaces, DevPod)
 
@@ -112,10 +118,10 @@ Docker-in-Docker needed.
 
 [![Open in DevPod!](https://devpod.sh/assets/open-in-devpod.svg)](https://devpod.sh/open#https://github.com/druxt/quickstart)
 
-| Tool | How |
-| --- | --- |
-| VS Code | Clone, open the folder, run **Dev Containers: Reopen in Container** |
-| GitHub Codespaces | On the repository page: **Code → Open with Codespaces** |
+| Tool                        | How                                                                                                                                                                                                                        |
+| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| VS Code                     | Clone, open the folder, run **Dev Containers: Reopen in Container**                                                                                                                                                        |
+| GitHub Codespaces           | On the repository page: **Code → Open with Codespaces**                                                                                                                                                                    |
 | [DevPod](https://devpod.sh) | Click the badge above, run `devpod up https://github.com/druxt/quickstart` (CLI), or add the same URL as a workspace source in DevPod's desktop app - all three read this same `devcontainer.json`, no extra config needed |
 
 First open runs `npm install` at the repository root, which triggers
@@ -130,28 +136,25 @@ npm run dev
 - Drupal backend: http://127.0.0.1:8888
 - Nuxt frontend: http://localhost:3000
 
-
 ## How to use it
 
 Your environment contains a pre-installed, pre-configured and running instance of Drupal and Nuxt, with the DruxtSite module enabled.
 
 In a Development Container (VS Code, Codespaces, DevPod), forwarded ports are accessible via your editor's **Ports** panel, or Codespaces' own URL pattern for forwarded ports.
 
-
 ## Services
 
-| Port | Service |
-| -- | -- |
-| `3000` | Nuxt.js |
+| Port   | Service   |
+| ------ | --------- |
+| `3000` | Nuxt.js   |
 | `3003` | Storybook |
-| `8080` | Drupal |
-
+| `8080` | Drupal    |
 
 ## Tools
 
 ### DDEV
 
-> DDEV is an open source tool that makes it dead simple to get local PHP development environments up and running within minutes. 
+> DDEV is an open source tool that makes it dead simple to get local PHP development environments up and running within minutes.
 
 DDEV is used to manage the Drupal instance, and provides a CLI that can be used to run common drupal tasks, including `ddev drush`.
 
@@ -178,7 +181,6 @@ this.$auth.loginWith('drupal-authorization_code')
 Druxt integrates with the Nuxt Storybook module to provide zero-configuration, auto-discovery stories with access to live data from your Drupal backend.
 
 To start Storybook, navigate to the `nuxt` directory and run `npx nuxt storybook`.
-
 
 ## License
 

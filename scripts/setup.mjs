@@ -82,8 +82,7 @@ function reportExternalSetup(backend) {
     console.log('')
     console.log('  Then copy the printed consumer UUID into OAUTH_CLIENT_ID')
     console.log('  in .env (it does not write .env itself).')
-  }
-  else {
+  } else {
     console.log('')
     console.log('  Provision the backend with its own tooling, then check')
     console.log('  OAUTH_CLIENT_ID in .env.')
