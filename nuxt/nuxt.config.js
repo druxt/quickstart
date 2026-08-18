@@ -44,13 +44,22 @@ export default {
   // Modules for dev and build (recommended): https://go.nuxtjs.dev/config-modules
   buildModules: [
     // https://go.nuxtjs.dev/eslint
-    '@nuxtjs/eslint-module',
-    ['druxt-auth', { clientId: process.env.OAUTH_CLIENT_ID }],
-    'druxt-site'
+    '@nuxtjs/eslint-module'
   ],
 
   // Modules: https://go.nuxtjs.dev/config-modules
-  modules: [],
+  //
+  // Druxt belongs in `modules`, NOT `buildModules`: Nuxt 2 does not load
+  // buildModules on `nuxt start`, so anything runtime the module
+  // registers - the @nuxtjs/proxy serverMiddleware behind
+  // `druxt.proxy.api`, the axios defaults - silently vanishes from
+  // production. The visible symptom: client-side /jsonapi requests get
+  // the app's own HTML shell back, and hydration wipes the SSR-rendered
+  // menus. Matches the druxt.js monorepo's own example placement.
+  modules: [
+    ['druxt-auth', { clientId: process.env.OAUTH_CLIENT_ID }],
+    'druxt-site'
+  ],
 
   // DruxtJS: https://druxtjs.org
   druxt: {
