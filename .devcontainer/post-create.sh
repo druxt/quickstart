@@ -56,4 +56,8 @@ echo "==> Trusting this repo's mise.toml"
 mise trust
 
 echo "==> Running npm install (triggers the full setup pipeline)"
-npm install
+# --loglevel=error: the root devDependencies are lint tooling that
+# requires Node 22 (CI runs them there); installing them under the
+# app's pinned Node 16 works fine but emits a wall of EBADENGINE
+# warnings that drowns the real setup output on first run.
+npm install --loglevel=error

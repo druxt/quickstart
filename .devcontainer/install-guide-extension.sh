@@ -13,8 +13,10 @@
 # missing guide is diagnosable instead of silently swallowed.
 #
 # Runs on every attach (postAttachCommand) - re-installing an already
-# installed extension version is a fast no-op.
-set -uo pipefail
+# installed extension version is a fast no-op. Never exits non-zero:
+# a lifecycle hook failure aborts the whole container attach, and a
+# missing walkthrough must never do that.
+set -o pipefail
 
 VSIX="$(dirname "$0")/extensions/quickstart-guide/quickstart-guide-1.0.0.vsix"
 
@@ -37,8 +39,8 @@ for c in "$HOME"/.vscode-server/bin/*/bin/remote-cli/code; do
 done
 
 # DevPod browser mode / Gitpod-style: openvscode-server.
-for c in "$HOME"/.openvscode-server/bin/openvscode-server "$OPENVSCODE_SERVER_ROOT/bin/openvscode-server"; do
-  [ -x "$c" ] 2>/dev/null && candidates+=("$c")
+for c in "$HOME"/.openvscode-server/bin/openvscode-server "${OPENVSCODE_SERVER_ROOT:-}/bin/openvscode-server"; do
+  [ -n "$c" ] && [ -x "$c" ] && candidates+=("$c")
 done
 if command -v openvscode-server >/dev/null 2>&1; then
   candidates+=("$(command -v openvscode-server)")
@@ -49,13 +51,16 @@ if command -v code-server >/dev/null 2>&1; then
   candidates+=("$(command -v code-server)")
 fi
 
-if [ ${#candidates[@]} -eq 0 ]; then
+if [ "${#candidates[@]}" -eq 0 ]; then
   echo "quickstart-guide: no VS Code server CLI found (code / vscode-server remote-cli / openvscode-server / code-server) - the walkthrough extension was not installed" >&2
   exit 0
 fi
 
 for cli in "${candidates[@]}"; do
-  if "$cli" --install-extension "$VSIX" >/dev/null 2>&1; then
+  # timeout: a CLI that can't reach its server can hang indefinitely,
+  # and this runs in a lifecycle hook - a stalled install must not
+  # stall the attach.
+  if timeout 60 "$cli" --install-extension "$VSIX" >/dev/null 2>&1; then
     echo "quickstart-guide: installed via $cli"
     echo "quickstart-guide: find the walkthrough under Help > Welcome (Get Started page)"
     exit 0
