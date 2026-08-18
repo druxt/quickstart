@@ -45,9 +45,9 @@ Requires [Node 16](.nvmrc) and one of:
 1. Create your repository from this template (or clone it), then from
    the repository root:
 
-   ````bash
-   npm run setup
    ```bash
+   npm run setup
+   ```
 
    This installs the frontend dependencies, provisions Drupal with
    Druxt, Simple OAuth and an OAuth Consumer (SQLite, throwaway), starts
@@ -56,18 +56,15 @@ Requires [Node 16](.nvmrc) and one of:
    `make setup` works too, as do `make dev`, `make login`, `make info`,
    `make reset`, etc.
 
-   ````
-
 2. Start developing:
 
-   ````bash
-   npm run dev
    ```bash
+   npm run dev
+   ```
 
    - Drupal backend: http://127.0.0.1:8888
    - Nuxt frontend: http://localhost:3000
    - One-time Drupal login: `npm run login`
-   ````
 
 `npm run dev` and `npm run start` automatically start the local backend
 if it is not already running, and leave external backends alone.
@@ -84,27 +81,23 @@ Using DDEV? Keep `BASE_URL` as the `*.ddev.site` URL in `.env`
 
 1. Frontend (from repository root):
 
-   ````bash
-   npm run setup
    ```bash
+   npm run setup
+   ```
 
    Detecting the DDEV `BASE_URL`, this installs the frontend only and
    prints the backend steps.
 
-   ````
-
 2. Backend (from `drupal/`):
 
-   ````bash
+   ```bash
    ddev start
    ddev drupal-install
    ddev druxt-add-consumer
-   ```bash
+   ```
 
-   `druxt-add-consumer` prints `OAUTH_CLIENT_ID=...` — copy it into
+   `druxt-add-consumer` prints `OAUTH_CLIENT_ID=...` - copy it into
    `.env`.
-
-   ````
 
 3. `npm run dev` as above. The DDEV backend is never auto-started or
    auto-stopped from the npm scripts.

@@ -1,5 +1,7 @@
 {
+  "customRules": ["./.markdownlint-rules/no-fence-in-fence.cjs"],
   "config": {
+    "local/no-fence-in-fence": true,
     "default": true,
     "MD013": false,
     "MD024": { "siblings_only": true },
