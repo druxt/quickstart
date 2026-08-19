@@ -415,3 +415,43 @@ preview:
       echo " Live for:   ${PREVIEW_LIVE_SECONDS}s (cancel this job to stop early)"
       echo "=================================================="
     - . ./code-server.env && sleep "$PREVIEW_LIVE_SECONDS"
+
+# The documented consumer flow (`npx giget gh:druxt/... my-site
+# --install`) consumes a tarball: no .git, no preinstalled dependencies,
+# and the root npm install stands everything up. git archive produces
+# that same artifact from this exact commit - giget itself can only
+# fetch refs already pushed to GitHub.
+test_giget:
+  extends: .php-node-setup
+  stage: test
+  needs: []
+  script:
+    - git archive --prefix=site/ "$CI_COMMIT_SHA" | tar -x -C /tmp
+    # `env -u CI`: postinstall deliberately steps aside on CI machines -
+    # this job's whole point is to behave like a consumer machine.
+    - cd /tmp/site && env -u CI npm install
+    - . /tmp/site/.env && curl -sf "${BASE_URL}/jsonapi" | grep -q '"jsonapi"'
+    - cd /tmp/site/nuxt && npm run build
+
+# What the root install promises on machines without a working PHP: a
+# giget consumer's `npm install` must never fail, `npm run setup` must
+# fail loudly, and a too-old PHP must be rejected by the preflight.
+test_install_guardrails:
+  stage: test
+  image: node:22
+  needs: []
+  script:
+    # npm install without PHP: exits 0 and points at `npm run setup`.
+    - env -u CI npm install > /tmp/install.log 2>&1
+    - grep -q 'The backend needs PHP' /tmp/install.log
+    # npm run setup without PHP: fails, and says what is missing.
+    - if npm run setup > /tmp/setup.log 2>&1; then echo "setup should have failed"; exit 1; fi
+    - grep -q 'Missing required tools' /tmp/setup.log
+    # Too-old PHP: the version preflight rejects it.
+    - |
+      SHIM=$(mktemp -d)
+      printf '#!/bin/sh\necho 8.2.29\n' > "$SHIM/php"
+      printf '#!/bin/sh\nexit 0\n' > "$SHIM/composer"
+      chmod +x "$SHIM/php" "$SHIM/composer"
+      if PATH="$SHIM:$PATH" npm run setup > /tmp/old-php.log 2>&1; then echo "setup should have failed"; exit 1; fi
+      grep -q 'too old' /tmp/old-php.log
