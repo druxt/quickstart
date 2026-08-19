@@ -271,7 +271,9 @@ jobs:
           REPO: ${{ github.event.pull_request.head.repo.full_name || github.repository }}
           SHA: ${{ github.event.pull_request.head.sha || github.sha }}
           GIGET_AUTH: ${{ github.token }}
-        run: npx giget "gh:${REPO}#${SHA}" site
+        # Pinned: this step runs with GIGET_AUTH, so an unpinned npx giget
+        # would hand a future registry release the workflow token.
+        run: npx giget@3.3.1 "gh:${REPO}#${SHA}" site
 
       - name: Setup Node
         uses: actions/setup-node@v4
