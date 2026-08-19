@@ -60,11 +60,16 @@ for cli in "${candidates[@]}"; do
   # timeout: a CLI that can't reach its server can hang indefinitely,
   # and this runs in a lifecycle hook - a stalled install must not
   # stall the attach.
-  if timeout 60 "$cli" --install-extension "$VSIX" >/dev/null 2>&1; then
+  output=$(timeout 60 "$cli" --install-extension "$VSIX" 2>&1)
+  status=$?
+  if [ "$status" -eq 0 ]; then
     echo "quickstart-guide: installed via $cli"
     echo "quickstart-guide: find the walkthrough under Help > Welcome (Get Started page)"
     exit 0
   fi
+  # Say why (last lines only): a swallowed error here once cost a whole
+  # debugging round-trip through a rebuilt workspace.
+  echo "quickstart-guide: $cli exited $status: $(printf '%s' "$output" | tail -n 3 | tr '\n' ' ')" >&2
 done
 
 echo "quickstart-guide: every candidate CLI failed to install $VSIX - run '<your code CLI> --install-extension $VSIX' manually" >&2
