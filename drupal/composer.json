@@ -50,9 +50,6 @@
             "symfony/runtime": true,
             "phpstan/extension-installer": true,
             "twig-cs-fixer/twig-cs-fixer": true
-        },
-        "platform": {
-            "ext-gd": "99.99.99"
         }
     },
     "extra": {

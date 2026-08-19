@@ -2,5 +2,5 @@
   "$schema": "https://unpkg.com/knip@6/schema.json",
   "entry": ["scripts/*.mjs", ".devcontainer/extensions/*/test.mjs"],
   "project": ["scripts/**/*.mjs", ".devcontainer/extensions/**/*.mjs"],
-  "ignore": ["nuxt/**", "drupal/**"]
+  "ignore": ["nuxt/**", "drupal/**"],
 }

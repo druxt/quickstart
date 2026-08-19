@@ -37,7 +37,10 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev"],
       "cwd": "${workspaceFolder}",
-      "env": { "NODE_OPTIONS": "--inspect" },
+      // Not NODE_OPTIONS=--inspect: every child (npm, dev.mjs, nuxt)
+      // would inherit it and fight over inspector port 9229. The
+      // debugger's own bootloader attaches to each child instead.
+      "autoAttachChildProcesses": true,
       "console": "integratedTerminal",
       "skipFiles": ["<node_internals>/**"]
     }

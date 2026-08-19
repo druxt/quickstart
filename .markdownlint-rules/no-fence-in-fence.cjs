@@ -20,7 +20,8 @@ const FENCE = /^(\s*)(`{3,}|~{3,})(.*)$/
 
 module.exports = {
   names: ['local/no-fence-in-fence'],
-  description: 'Fence marker with a language inside an open code fence (mangled fences swallow prose)',
+  description:
+    'Fence marker with a language inside an open code fence (mangled fences swallow prose)',
   tags: ['code', 'local'],
   parser: 'none',
   function: (params, onError) => {

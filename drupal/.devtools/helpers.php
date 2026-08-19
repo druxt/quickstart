@@ -247,33 +247,53 @@ function find_free_port(int $start = 8888, int $max_attempts = 100): int {
 /**
  * Stop the dev webserver started by .devtools/start.
  *
- * Prefers the pidfile written at start time so only the exact process we
- * started is signalled - the port may have been reused by an unrelated
- * service in the meantime. Falls back to lsof for servers started before
- * the pidfile existed (or via WEBSERVER_PORT changes).
+ * Prefers the pidfile written at start time, falling back to whatever is
+ * bound to the dev port for servers started before the pidfile existed
+ * (or via WEBSERVER_PORT changes). Every candidate PID is verified to
+ * still be a PHP dev server before it is signalled - the OS reuses PIDs,
+ * and the port may hold an unrelated service.
  */
 function stop_webserver(string $port): void {
   $pid_file = server_pid_file();
+  $candidates = [];
 
   if (is_file($pid_file)) {
     $pid = trim((string) file_get_contents($pid_file));
     if ($pid !== '' && ctype_digit($pid)) {
-      // A stale pidfile can name a PID the OS has since reused for an
-      // unrelated process - only signal it if it still looks like the
-      // PHP dev server this tooling started.
-      $command = trim((string) @shell_exec(sprintf('ps -p %d -o command= 2>/dev/null', (int) $pid)));
-      if ($command !== '' && str_contains($command, 'php') && str_contains($command, '-S')) {
-        @exec(sprintf('kill -9 %d 2>/dev/null', (int) $pid));
-      }
+      $candidates[] = (int) $pid;
     }
     @unlink($pid_file);
   }
 
   // The pidfile can go stale - e.g. a server left running from an earlier
   // session, or a pidfile write that raced with the process it names.
-  // Whatever is still bound to our own dev port after the step above is
-  // safe to reclaim: it is a loopback dev server this tooling owns.
-  @passthru(sprintf('lsof -ti:%s | xargs kill -9 2>/dev/null', escapeshellarg($port)));
+  $port_pids = [];
+  @exec(sprintf('lsof -ti:%s 2>/dev/null', escapeshellarg($port)), $port_pids);
+  foreach ($port_pids as $pid) {
+    $pid = trim((string) $pid);
+    if ($pid !== '' && ctype_digit($pid)) {
+      $candidates[] = (int) $pid;
+    }
+  }
+
+  $targets = array_filter(array_unique($candidates), function (int $pid): bool {
+    $command = trim((string) @shell_exec(sprintf('ps -p %d -o command= 2>/dev/null', $pid)));
+    return $command !== '' && str_contains($command, 'php') && str_contains($command, '-S');
+  });
+  if ($targets === []) {
+    return;
+  }
+
+  // TERM first so the server can exit cleanly; escalate only if it lingers.
+  foreach ($targets as $pid) {
+    @exec(sprintf('kill %d 2>/dev/null', $pid));
+  }
+  usleep(500000);
+  foreach ($targets as $pid) {
+    if (trim((string) @shell_exec(sprintf('ps -p %d -o pid= 2>/dev/null', $pid))) !== '') {
+      @exec(sprintf('kill -9 %d 2>/dev/null', $pid));
+    }
+  }
 }
 
 /**
@@ -284,7 +304,7 @@ function server_pid_file(): string {
   // repo on the machine, letting one checkout's `stop` kill another
   // checkout's server (the pidfile written last wins). cwd is stable
   // here - every .devtools script runs from drupal/.
-  return sprintf('/tmp/quickstart-drupal-php-server-%s.pid', substr(md5((string) getcwd()), 0, 8));
+  return sprintf('/tmp/quickstart-drupal-php-server-%s.pid', hash('sha256', (string) getcwd()));
 }
 
 /**

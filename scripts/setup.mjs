@@ -17,6 +17,7 @@
  * everything, not just the (empty) root package.
  */
 
+import { spawnSync } from 'node:child_process'
 import path from 'node:path'
 import { pathToFileURL } from 'node:url'
 import {
@@ -43,9 +44,32 @@ const prerequisites = [
   },
 ]
 
+// Drupal 11's hard floor. This repo targets 8.4 (see mise.toml), but
+// composer resolves against 8.3 - reject only what can never work.
+const MINIMUM_PHP = [8, 3]
+
+function checkPhpVersion() {
+  const result = spawnSync('php', ['-r', 'echo PHP_VERSION;'], { encoding: 'utf8' })
+  const version = (result.stdout || '').trim()
+  const match = version.match(/^(\d+)\.(\d+)/)
+  if (!match) {
+    // Unreadable version: let composer produce the error rather than
+    // guessing wrong here.
+    return
+  }
+  const [major, minor] = [Number(match[1]), Number(match[2])]
+  if (major > MINIMUM_PHP[0] || (major === MINIMUM_PHP[0] && minor >= MINIMUM_PHP[1])) {
+    return
+  }
+  exitWithError(
+    `PHP ${version} is too old - Drupal 11 needs PHP >= ${MINIMUM_PHP.join('.')} (8.4 recommended, see mise.toml).`
+  )
+}
+
 function checkPrerequisites() {
   const missing = prerequisites.filter((tool) => !toolAvailable(tool.command))
   if (missing.length === 0) {
+    checkPhpVersion()
     return
   }
 

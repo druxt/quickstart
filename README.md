@@ -147,7 +147,7 @@ In a Development Container (VS Code, Codespaces, DevPod), forwarded ports are ac
 
 ### DDEV
 
-> DDEV is an open source tool that makes it dead simple to get local PHP development environments up and running within minutes.
+> DDEV is an open-source tool that makes it dead simple to get local PHP development environments up and running within minutes.
 
 DDEV is used to manage the Drupal instance, and provides a CLI that can be used to run common drupal tasks, including `ddev drush`.
 

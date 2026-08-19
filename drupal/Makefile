@@ -3,6 +3,9 @@ SHELL=/bin/bash
 WEBSERVER_HOST ?= 127.0.0.1
 WEBSERVER_PORT ?= 8888
 DB_FILE ?= /tmp/quickstart-drupal-site.sqlite
+# Recipes read these from the environment (.devtools/*) - a plain
+# `make start WEBSERVER_PORT=9000` sets only the Make variable otherwise.
+export WEBSERVER_HOST WEBSERVER_PORT DB_FILE
 
 .PHONY: build assemble provision start stop info describe drush login debug reset delete destroy
 

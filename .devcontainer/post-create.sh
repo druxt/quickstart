@@ -32,11 +32,14 @@ echo "==> Building gd (not compiled in by the PHP feature at all)"
 # install. Build ext/gd directly from PHP's own source tree instead -
 # the same technique the PHP feature itself uses as its xdebug fallback.
 PHP_FULL_VERSION=$(php -r 'echo PHP_VERSION;')
-GD_BUILD_DIR="/tmp/php-gd-build"
-rm -rf "$GD_BUILD_DIR"
+# mktemp, not a fixed /tmp path: predictable names are open to symlink
+# swaps by any local process between download and extract.
+PHP_SRC_TMP="$(mktemp -d)"
+trap 'rm -rf "$PHP_SRC_TMP"' EXIT
+GD_BUILD_DIR="$PHP_SRC_TMP/gd"
 mkdir -p "$GD_BUILD_DIR"
-curl -fsSL "https://www.php.net/distributions/php-${PHP_FULL_VERSION}.tar.gz" -o /tmp/php-src.tar.gz
-tar -xzf /tmp/php-src.tar.gz -C "$GD_BUILD_DIR" --strip-components=3 "php-${PHP_FULL_VERSION}/ext/gd"
+curl -fsSL "https://www.php.net/distributions/php-${PHP_FULL_VERSION}.tar.gz" -o "$PHP_SRC_TMP/php-src.tar.gz"
+tar -xzf "$PHP_SRC_TMP/php-src.tar.gz" -C "$GD_BUILD_DIR" --strip-components=3 "php-${PHP_FULL_VERSION}/ext/gd"
 (
   cd "$GD_BUILD_DIR"
   phpize
@@ -44,7 +47,6 @@ tar -xzf /tmp/php-src.tar.gz -C "$GD_BUILD_DIR" --strip-components=3 "php-${PHP_
   make -j"$(nproc)"
   make install
 )
-rm -rf "$GD_BUILD_DIR" /tmp/php-src.tar.gz
 echo 'extension=gd' | sudo tee "$CONF_DIR/gd.ini" > /dev/null
 
 # Fail fast if the gd build above didn't actually take - composer and

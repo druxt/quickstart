@@ -25,9 +25,9 @@ If applicable, add screenshots or video to help explain your problem.
 
 **Your Environment (please complete the following information):**
 
-- Device: [e.g. iPhone6]
+- Device: [e.g. iPhone 6]
 - OS: [e.g. iOS]
-- Browser [e.g. chrome, safari]
+- Browser: [e.g. Chrome, Safari]
 - Version [e.g. 22]
 
 **Additional context**
