@@ -16,10 +16,18 @@ import http from 'node:http'
 import https from 'node:https'
 import { exitWithError, readEnv } from './lib.mjs'
 
-function request(url) {
+function request(url, postBody) {
   return new Promise((resolve, reject) => {
     const client = url.protocol === 'https:' ? https : http
-    const req = client.get(url, { timeout: 10000 }, (res) => {
+    const options = { timeout: 10000 }
+    if (postBody !== undefined) {
+      options.method = 'POST'
+      options.headers = {
+        'content-type': 'application/x-www-form-urlencoded',
+        'content-length': Buffer.byteLength(postBody),
+      }
+    }
+    const req = client.request(url, options, (res) => {
       let body = ''
       res.on('data', (chunk) => {
         body += chunk
@@ -28,6 +36,7 @@ function request(url) {
     })
     req.on('timeout', () => req.destroy(new Error('timed out')))
     req.on('error', reject)
+    req.end(postBody)
   })
 }
 
@@ -57,6 +66,32 @@ async function main() {
   }
 
   console.log(`OAuth consumer recognised (HTTP ${status}).`)
+
+  // Being recognised is not enough: the consumer also has to have the
+  // authorization_code grant enabled, or the code exchange fails with
+  // unsupported_grant_type after the user has already logged in. Sending
+  // a deliberately invalid code is enough to tell the two apart.
+  const tokenUrl = new URL('/oauth/token', env.BASE_URL)
+  const form = new URLSearchParams({
+    grant_type: 'authorization_code',
+    client_id: env.OAUTH_CLIENT_ID,
+    redirect_uri: env.OAUTH_CALLBACK || 'http://localhost:3000/callback',
+    code: 'not-a-real-code',
+    code_verifier: 'not-a-real-verifier',
+  }).toString()
+
+  const token = await request(tokenUrl, form)
+
+  if (token.body.includes('unsupported_grant_type')) {
+    exitWithError(
+      'The consumer does not have the authorization_code grant enabled.\n\n' +
+        '  Login gets as far as the code exchange and then fails with\n' +
+        '  {"error":"unsupported_grant_type"}.\n\n' +
+        '  Re-run `npm run provision` to recreate the consumer.'
+    )
+  }
+
+  console.log('Authorization code grant enabled.')
 }
 
 main().catch((error) => exitWithError(`OAuth check failed: ${error.message}`))

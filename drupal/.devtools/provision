@@ -134,8 +134,26 @@ $consumer = \Drupal\consumers\Entity\Consumer::create([
   "description"  => "DruxtJS is a bridge between frameworks, Drupal in the back, Nuxt in the front.\n\nhttps://druxtjs.org",
   "confidential" => FALSE,
   "pkce"         => TRUE,
+  // Required by simple_oauth 6 and, like client_id, enforced only in the
+  // form - a programmatic save leaves it empty and the token request
+  // fails with unsupported_grant_type. refresh_token lets the frontend
+  // renew a session without sending the user back through login.
+  "grant_types"  => ["authorization_code", "refresh_token"],
   "redirect"     => getenv("OAUTH_CALLBACK") ?: "http://localhost:3000/callback",
 ]);
+// Validate before saving: these fields are required, but only the
+// entity form enforces that, so a programmatic save silently produces a
+// consumer that cannot authenticate. Two separate bugs shipped that way
+// (empty client_id, empty grant_types), each surfacing only as a failed
+// login. Fail here instead.
+$violations = $consumer->validate();
+if ($violations->count() > 0) {
+  $messages = [];
+  foreach ($violations as $violation) {
+    $messages[] = $violation->getPropertyPath() . ": " . strip_tags((string) $violation->getMessage());
+  }
+  throw new \RuntimeException("Refusing to save an invalid Consumer - " . implode("; ", $messages));
+}
 $consumer->save();
 PHP);
 dotenv_write_var('OAUTH_CLIENT_ID', $client_id);
