@@ -165,7 +165,16 @@ $consumer = \Drupal\consumers\Entity\Consumer::create([
   // no scope (or an empty one, as druxt-auth does) resolves to this
   // rather than being rejected.
   "authorization_code_scopes" => [$scope_id],
-  "redirect"     => getenv("OAUTH_CALLBACK") ?: "http://localhost:3000/callback",
+  // Multi-value on purpose. The browser builds redirect_uri from its own
+  // origin, and an IDE forwarding container port 3000 lands on the next
+  // free HOST port (3001, 3002, ...) when 3000 is taken - league then
+  // rejects the unregistered redirect_uri as, confusingly,
+  // invalid_client. Registering the nearby ports keeps login working in
+  // forwarded dev sessions.
+  "redirect"     => array_values(array_unique(array_merge(
+    [getenv("OAUTH_CALLBACK") ?: "http://localhost:3000/callback"],
+    array_map(fn ($port) => "http://localhost:{$port}/callback", range(3000, 3009)),
+  ))),
 ]);
 // Validate before saving: these fields are required, but only the
 // entity form enforces that, so a programmatic save silently produces a

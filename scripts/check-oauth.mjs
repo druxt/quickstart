@@ -162,6 +162,29 @@ export async function checkOauth() {
   const emptyScope = await request(emptyScopeUrl)
   assertAuthorizeAccepted(emptyScope, 'authorize with an empty scope', env)
   console.log(`Empty scope accepted (HTTP ${emptyScope.status}).`)
+
+  // The browser builds redirect_uri from its own origin. When an IDE
+  // forwards container port 3000 to another host port, that origin no
+  // longer matches the registered callback and Drupal answers - very
+  // confusingly - invalid_client. Provisioning registers localhost
+  // 3000-3009 to absorb that; verify a couple of them here so a
+  // regression names itself.
+  for (const port of [3001, 3005]) {
+    const fwd = new URL(url)
+    fwd.searchParams.set('redirect_uri', `http://localhost:${port}/callback`)
+    const res = await request(fwd)
+    const err = parse(res)
+    if (err && err.error === 'invalid_client') {
+      exitWithError(
+        `The callback for a forwarded port (localhost:${port}) is not registered.\n\n` +
+          '  Browsers reach forwarded dev servers on whatever host port the IDE\n' +
+          '  could grab, and Drupal rejects an unregistered redirect_uri as\n' +
+          '  invalid_client. Re-run `npm run provision` to register the 3000-3009\n' +
+          '  callback range.'
+      )
+    }
+  }
+  console.log('Forwarded-port callbacks (3000-3009) registered.')
 }
 
 const invokedDirectly =
