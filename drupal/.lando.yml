@@ -1,0 +1,35 @@
+name: druxt-quickstart
+recipe: drupal11
+
+config:
+  webroot: web
+  php: '8.4'
+  database: mariadb:11.4
+  via: nginx
+  composer_version: '2'
+  xdebug: false
+
+# The install steps are the ones DDEV runs - one copy, so the two
+# container workflows cannot drift apart. Lando mounts this directory
+# (the Landofile's own directory) at /app; the scripts resolve their own
+# paths from that mount, and the install commands below pin their
+# working directory so it cannot depend on where they were called from.
+tooling:
+  drupal-install:
+    service: appserver
+    # Pinned: without this Lando mirrors the caller's directory, so
+    # running it from drupal/web would put the container in /app/web.
+    dir: /app
+    description: Install Drupal and configure it for DruxtSite
+    cmd: bash /app/.ddev/commands/web/drupal-install
+
+  druxt-add-consumer:
+    service: appserver
+    # Pinned: without this Lando mirrors the caller's directory, so
+    # running it from drupal/web would put the container in /app/web.
+    dir: /app
+    description: Create the Simple OAuth consumer the Nuxt frontend authenticates with
+    cmd: bash /app/.ddev/commands/web/druxt-add-consumer
+
+  drush:
+    service: appserver

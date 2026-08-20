@@ -20,6 +20,26 @@ export const ENV_FILE = path.join(ROOT, '.env')
 export const SETUP_LOCK_DIR = path.join(ROOT, '.setup.lock')
 
 /**
+ * What to tell a Windows user instead of failing midway: the local
+ * backend runs a PHP built-in server managed with nohup, lsof, ps and
+ * kill, and provisioning generates OAuth keys through OpenSSL, none of
+ * which works on Windows outside a Linux environment.
+ */
+export const WINDOWS_HELP = [
+  'The local PHP backend is not supported on Windows directly.',
+  '',
+  'Pick one of these instead - all three run this repo unchanged:',
+  '',
+  '  - Dev container: open this folder in VS Code and "Reopen in',
+  '    Container", or run `devpod up .`. Everything is set up for you.',
+  '  - WSL2: clone and run the same commands inside your Linux distro.',
+  '  - DDEV or Lando: start the container backend, put its URL in',
+  '    BASE_URL in .env, then run `npm run setup` for the frontend.',
+  '',
+  'See the Windows section of README.md.',
+].join('\n')
+
+/**
  * The setup lock: two setups in one checkout corrupt nuxt/node_modules
  * and drupal/vendor (two npm/composer processes race in the same dirs).
  * The realistic collision: a dev container's automatic post-create setup
@@ -80,7 +100,7 @@ export function setupLockContentionMessage() {
   )
 }
 
-const IS_WINDOWS = process.platform === 'win32'
+export const IS_WINDOWS = process.platform === 'win32'
 
 // npm is npm.cmd on Windows, and .cmd files must be spawned via a shell.
 const NPM = IS_WINDOWS ? 'npm.cmd' : 'npm'
@@ -168,6 +188,7 @@ export function backendInfo(env = readEnv()) {
   return {
     managed: loopback,
     ddev: host.endsWith('.ddev.site'),
+    lando: host.endsWith('.lndo.site'),
     url,
     host,
     port: Number(parsed.port) || (parsed.protocol === 'https:' ? 443 : 80),
@@ -327,6 +348,21 @@ export function foregroundNpm(args, opts = {}) {
  * start the .devtools PHP server when BASE_URL is loopback and down;
  * never start anything for DDEV/external backends.
  */
+export function ensureOauthClientId(env = readEnv()) {
+  if (env.OAUTH_CLIENT_ID) {
+    return
+  }
+  // Without this, Nuxt dies inside druxt-auth with "requires a clientId
+  // to be provided", which says nothing about what to do. It is empty
+  // whenever provisioning did not finish, so point at that instead.
+  const backend = backendInfo(env)
+  const fix =
+    backend.url && !backend.managed
+      ? "Create a consumer with the backend's own tooling (DDEV: `ddev druxt-add-consumer`,\n  Lando: `lando druxt-add-consumer`) and copy the printed UUID into .env."
+      : 'Run `npm run setup` to provision the backend - it writes this value.'
+  exitWithError(`OAUTH_CLIENT_ID is not set in .env.\n\n  ${fix}`)
+}
+
 export async function ensureBackend() {
   const backend = backendInfo()
 

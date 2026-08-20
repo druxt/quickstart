@@ -8,39 +8,58 @@
 # half-provisioned site that later commands "fix" silently.
 set -euo pipefail
 
-# Install composer dependencies.
-composer install
+# Every path below is absolute and derived here, because this script runs
+# under both DDEV and Lando, which mount the project at different paths
+# and hand the script different working directories.
+if [ -f /var/www/html/composer.json ]; then
+  PROJECT_ROOT=/var/www/html            # DDEV
+  # DDEV writes settings.ddev.php with the database credentials, so
+  # site:install finds them by itself.
+  DB_URL_ARG=""
+elif [ -f /app/composer.json ]; then
+  PROJECT_ROOT=/app                     # Lando
+  # Lando writes no Drupal settings at all. Without credentials,
+  # site:install drops into its interactive database prompt and dies on
+  # a null driver. These are the drupal11 recipe's documented defaults.
+  DB_URL_ARG="--db-url=mysql://drupal11:drupal11@database/drupal11"
+else
+  PROJECT_ROOT="$(pwd)"
+  DB_URL_ARG=""
+fi
+DRUPAL_ROOT="$PROJECT_ROOT/web"
 
-# Install a standard Drupal installation.
-drush -y site:install --site-name='quickstart-druxt-site' standard
+# Install composer dependencies.
+composer install --working-dir="$PROJECT_ROOT"
+
+# Install a standard Drupal installation. Drush is given the docroot
+# explicitly: DDEV's wrapper infers it, Lando's does not.
+drush -r "$DRUPAL_ROOT" -y site:install --site-name='quickstart-druxt-site' ${DB_URL_ARG:+"$DB_URL_ARG"} standard
 
 # Drupal 11's standard profile no longer creates content types itself -
 # Article and Page ship as separate core recipes. Without them there are
 # no node bundles, and jsonapi_views can't register a route for any
 # node-based view (including the front page).
-drush -y recipe:apply "$(pwd)/core/recipes/article_content_type"
-drush -y recipe:apply "$(pwd)/core/recipes/page_content_type"
-drush -y cache:rebuild
+drush -r "$DRUPAL_ROOT" -y recipe:apply "$DRUPAL_ROOT/core/recipes/article_content_type"
+drush -r "$DRUPAL_ROOT" -y recipe:apply "$DRUPAL_ROOT/core/recipes/page_content_type"
+drush -r "$DRUPAL_ROOT" -y cache:rebuild
 
 # Enable the Druxt module.
-drush -y pm:enable druxt
+drush -r "$DRUPAL_ROOT" -y pm:enable druxt
 
 # Allow the anonymous user read only access to required Druxt resources.
-drush role:perm:add anonymous "access druxt resources"
+drush -r "$DRUPAL_ROOT" role:perm:add anonymous "access druxt resources"
 
 # Enable the Simple OAuth module for authentication.
-drush -y pm:enable simple_oauth
+drush -r "$DRUPAL_ROOT" -y pm:enable simple_oauth
 
-# Configure and generate keys for Simple OAuth. Absolute path on purpose:
-# this command's cwd is /var/www/html (the mounted project root), so a
-# relative ../keys would land OUTSIDE the mount - ephemeral, and not the
-# drupal/keys/ location the config values below resolve to (they are
-# Drupal-side paths, resolved relative to the app root web/).
-KEYS_DIR="/var/www/html/keys"
+# Keys live at the project root, NOT under the docroot: the config
+# values below are Drupal-side paths resolved relative to web/, so
+# ../keys from there is this directory.
+KEYS_DIR="$PROJECT_ROOT/keys"
 mkdir -p "$KEYS_DIR"
-drush -y config:set simple_oauth.settings public_key ../keys/public.key
-drush -y config:set simple_oauth.settings private_key ../keys/private.key
-drush simple-oauth:generate-keys "$KEYS_DIR"
+drush -r "$DRUPAL_ROOT" -y config:set simple_oauth.settings public_key ../keys/public.key
+drush -r "$DRUPAL_ROOT" -y config:set simple_oauth.settings private_key ../keys/private.key
+drush -r "$DRUPAL_ROOT" simple-oauth:generate-keys "$KEYS_DIR"
 
 # Enable authenticated editting via JSON:API.
-drush -y config:set jsonapi.settings read_only 0
+drush -r "$DRUPAL_ROOT" -y config:set jsonapi.settings read_only 0

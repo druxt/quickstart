@@ -120,15 +120,75 @@ $client_id = generate_uuid();
 putenv('OAUTH_CLIENT_ID=' . $client_id);
 putenv('OAUTH_CALLBACK=' . $oauth_callback);
 drush('php-eval %s', <<<'PHP'
+// Simple OAuth 6 rejects an authorize request when it cannot resolve a
+// scope, and its default provider is "Dynamic (entity)" with no scopes
+// shipped - so a fresh site has none and every login fails with
+// "Check the `scope` parameter", whether the frontend sends a scope or
+// not. Create one and make it the consumer default, which is what
+// ScopeRepository::finalizeScopes() falls back to.
+$scope_id = "druxt";
+if (!\Drupal::entityTypeManager()->getStorage("oauth2_scope")->load($scope_id)) {
+  \Drupal\simple_oauth\Entity\Oauth2Scope::create([
+    "id" => $scope_id,
+    "name" => $scope_id,
+    "description" => "Access granted to the Druxt frontend.",
+    "grant_types" => [
+      "authorization_code" => ["status" => TRUE, "description" => "Authorization code grant."],
+      "refresh_token" => ["status" => TRUE, "description" => "Refresh token grant."],
+    ],
+    "umbrella" => FALSE,
+    "granularity_id" => "role",
+    "granularity_configuration" => ["role" => "authenticated"],
+  ])->save();
+}
+
+$client_id = getenv("OAUTH_CLIENT_ID") ?: \Drupal::service("uuid")->generate();
 $consumer = \Drupal\consumers\Entity\Consumer::create([
   "owner_id"     => 1,
-  "uuid"         => getenv("OAUTH_CLIENT_ID") ?: \Drupal::service("uuid")->generate(),
+  // client_id, not just uuid: simple_oauth 6 looks consumers up by this
+  // field, and consumers only enforces it through form validation, so a
+  // programmatic save leaves it empty and every OAuth request fails with
+  // invalid_client. Same value as the uuid so one ID identifies the
+  // consumer everywhere.
+  "client_id"    => $client_id,
+  "uuid"         => $client_id,
   "label"        => "Druxt",
   "description"  => "DruxtJS is a bridge between frameworks, Drupal in the back, Nuxt in the front.\n\nhttps://druxtjs.org",
   "confidential" => FALSE,
   "pkce"         => TRUE,
-  "redirect"     => getenv("OAUTH_CALLBACK") ?: "http://localhost:3000/callback",
+  // Required by simple_oauth 6 and, like client_id, enforced only in the
+  // form - a programmatic save leaves it empty and the token request
+  // fails with unsupported_grant_type. refresh_token lets the frontend
+  // renew a session without sending the user back through login.
+  "grant_types"  => ["authorization_code", "refresh_token"],
+  // The default scope for this grant: with it set, a request that sends
+  // no scope (or an empty one, as druxt-auth does) resolves to this
+  // rather than being rejected.
+  "authorization_code_scopes" => [$scope_id],
+  // Multi-value on purpose. The browser builds redirect_uri from its own
+  // origin, and an IDE forwarding container port 3000 lands on the next
+  // free HOST port (3001, 3002, ...) when 3000 is taken - league then
+  // rejects the unregistered redirect_uri as, confusingly,
+  // invalid_client. Registering the nearby ports keeps login working in
+  // forwarded dev sessions.
+  "redirect"     => array_values(array_unique(array_merge(
+    [getenv("OAUTH_CALLBACK") ?: "http://localhost:3000/callback"],
+    array_map(fn ($port) => "http://localhost:{$port}/callback", range(3000, 3009)),
+  ))),
 ]);
+// Validate before saving: these fields are required, but only the
+// entity form enforces that, so a programmatic save silently produces a
+// consumer that cannot authenticate. Two separate bugs shipped that way
+// (empty client_id, empty grant_types), each surfacing only as a failed
+// login. Fail here instead.
+$violations = $consumer->validate();
+if ($violations->count() > 0) {
+  $messages = [];
+  foreach ($violations as $violation) {
+    $messages[] = $violation->getPropertyPath() . ": " . strip_tags((string) $violation->getMessage());
+  }
+  throw new \RuntimeException("Refusing to save an invalid Consumer - " . implode("; ", $messages));
+}
 $consumer->save();
 PHP);
 dotenv_write_var('OAUTH_CLIENT_ID', $client_id);

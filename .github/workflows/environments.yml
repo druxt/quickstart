@@ -1,0 +1,137 @@
+name: Environments
+
+# The README offers four ways to run this starterkit. Three of them boot
+# containers, which the main CI never touches - it only exercises the
+# Docker-free path. These jobs cover the other three, so a broken DDEV
+# command or Landofile is found here rather than by someone following
+# the README.
+#
+# They are slow (container build plus a full Composer install), so they
+# run when the files they cover change, once a week to catch upstream
+# drift, and on demand - not on every push.
+on:
+  push:
+    paths: &environment-paths
+      - '.devcontainer/**'
+      - '.env.example'
+      - 'drupal/.ddev/**'
+      - 'drupal/.devtools/**'
+      - 'drupal/.lando.yml'
+      - 'package.json'
+      - 'drupal/composer.json'
+      - 'drupal/composer.lock'
+      - 'scripts/**'
+      - '.github/workflows/environments.yml'
+  pull_request:
+    paths: *environment-paths
+  schedule:
+    - cron: '0 4 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: environments-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ddev:
+    name: DDEV
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      # Starts the project too (autostart defaults to true).
+      - uses: ddev/github-action-setup-ddev@v1
+        with:
+          ddevDir: drupal
+
+      - name: Install Drupal
+        working-directory: drupal
+        run: ddev drupal-install
+
+      - name: Create the OAuth consumer
+        working-directory: drupal
+        run: |
+          ddev druxt-add-consumer | tee /tmp/consumer.txt
+          grep -o 'OAUTH_CLIENT_ID=.*' /tmp/consumer.txt >> ../.env
+
+      # The container path builds its consumer with its own script, so
+      # the local path's coverage does not extend to it.
+      - name: OAuth consumer is recognised
+        run: npm run check:oauth
+
+      # From inside the web container: no dependency on the runner
+      # resolving *.ddev.site. -sS so a failure still prints why.
+      - name: JSON:API responds
+        working-directory: drupal
+        run: ddev exec 'curl -sS http://localhost/jsonapi' | tee /dev/stderr | grep -q '"jsonapi"'
+
+  lando:
+    name: Lando
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      # Installs Lando only - unlike the DDEV action it does not start
+      # the app, so `lando start` is a step of its own below.
+      - uses: lando/setup-lando@v3
+
+      - name: Start Lando
+        working-directory: drupal
+        run: lando start
+
+      - name: Install Drupal
+        working-directory: drupal
+        run: lando drupal-install
+
+      - name: Create the OAuth consumer
+        working-directory: drupal
+        run: |
+          lando druxt-add-consumer | tee /tmp/consumer.txt
+          grep -o 'OAUTH_CLIENT_ID=.*' /tmp/consumer.txt >> ../.env
+
+      # Checked from the host over the Lando URL, which is the path a
+      # user actually takes. `via: nginx` puts the web server in its own
+      # container, so localhost inside appserver serves nothing.
+      - name: JSON:API responds
+        working-directory: drupal
+        run: |
+          URL=$(lando info --format json 2>/dev/null \
+            | jq -r '.[] | select(.service == "appserver") | .urls[]?' \
+            | grep '^http://' | head -1)
+          URL="${URL:-http://druxt-quickstart.lndo.site}"
+          echo "Checking $URL/jsonapi"
+          curl -sS "$URL/jsonapi" | tee /dev/stderr | grep -q '"jsonapi"'
+          # Write .env outright: unlike DDEV there is no hook seeding it,
+          # so a substitution has nothing to match and the check aborts.
+          printf 'BASE_URL=%s\n' "$URL" > ../.env
+          grep -o 'OAUTH_CLIENT_ID=.*' /tmp/consumer.txt >> ../.env
+          cd .. && npm run check:oauth
+
+  devcontainer:
+    name: Dev container
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      # Builds devcontainer.json for real and runs post-create.sh, which
+      # is the same first-run a DevPod or VS Code user gets.
+      - uses: devcontainers/ci@v0.3
+        with:
+          push: never
+          runCmd: |
+            set -e
+            npm run devtools -- start
+            . ./.env
+            curl -sf "${BASE_URL}/jsonapi" | grep -q '"jsonapi"'

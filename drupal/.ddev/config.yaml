@@ -16,6 +16,14 @@ use_dns_when_possible: true
 composer_version: "2"
 web_environment: []
 
+# docker-compose.env.yaml mounts ../.env into the container, and Docker
+# fails the whole start when that file is missing. It is gitignored, so
+# a fresh clone has none until setup runs - seed it from the example so
+# `ddev start` works straight after cloning.
+hooks:
+  pre-start:
+    - exec-host: "test -f ../.env || cp ../.env.example ../.env"
+
 # Key features of ddev's config.yaml:
 
 # name: <projectname> # Name of the project, automatically provides
