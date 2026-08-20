@@ -95,6 +95,17 @@ minor is for.
 - The dev container no longer leaves Xdebug active, which made every
   `php` and `composer` call wait for a debugger.
 
+### Dependencies
+
+- GitHub Actions on v7: `actions/checkout`, `actions/setup-node`,
+  `actions/upload-artifact` and `codecov/codecov-action`.
+- Nuxt dependencies: core-js 3.50.0, dotenv 17, Cypress 15,
+  start-server-and-test 3, stylelint 14.16.1,
+  stylelint-config-standard 29 and @nuxtjs/eslint-config 12.
+- Dependabot no longer files version updates. Renovate covers the same
+  four ecosystems and carries the auto-merge policy, so every bump was
+  arriving twice. Dependabot security alerts are unaffected.
+
 ### Known limitations
 
 - Nuxt 2 and Node 16 are both end of life. This starterkit is pinned to
