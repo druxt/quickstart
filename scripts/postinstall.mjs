@@ -19,7 +19,9 @@
  */
 
 import {
+  IS_WINDOWS,
   SPLASH,
+  WINDOWS_HELP,
   backendInfo,
   miseAvailable,
   printCommands,
@@ -67,6 +69,16 @@ async function main() {
   // which needs neither PHP nor Composer - never block it on them.
   const backend = backendInfo(env)
   const externalBackend = backend.url && !backend.managed
+
+  if (IS_WINDOWS && !externalBackend) {
+    console.log('  Node side ready.')
+    console.log('')
+    for (const line of WINDOWS_HELP.split('\n')) {
+      console.log(line ? `  ${line}` : '')
+    }
+    console.log('')
+    return
+  }
 
   if (!externalBackend && (!toolAvailable('php') || !toolAvailable('composer'))) {
     console.log('  Node side ready. The backend needs PHP 8.4 + Composer (or DDEV).')
