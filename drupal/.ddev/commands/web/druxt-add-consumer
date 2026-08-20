@@ -4,8 +4,17 @@
 ## Usage: druxt-add-consumer
 ## Example: "ddev druxt-add-consumer"
 
+# Same dual-mount resolution as drupal-install.
+if [ -f /var/www/html/composer.json ]; then
+  DRUPAL_ROOT=/var/www/html/web          # DDEV
+elif [ -f /app/composer.json ]; then
+  DRUPAL_ROOT=/app/web                   # Lando
+else
+  DRUPAL_ROOT="$(pwd)/web"
+fi
+
 # Create a Druxt consumer (simple_oauth 6.x Consumer entity).
-drush php-eval '
+drush -r "$DRUPAL_ROOT" php-eval '
 $consumer = \Drupal\consumers\Entity\Consumer::create([
   "owner_id"     => 1,
   "uuid"         => getenv("OAUTH_CLIENT_ID") ?: \Drupal::service("uuid")->generate(),
