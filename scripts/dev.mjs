@@ -5,11 +5,49 @@
  * DDEV / remote backends are used as-is and never started from here.
  */
 
-import { NUXT_DIR, ensureBackend, exitWithError, foregroundNpm } from './lib.mjs'
+import {
+  NUXT_DIR,
+  ensureBackend,
+  ensureOauthClientId,
+  exitWithError,
+  foregroundNpm,
+  isPortOpen,
+  readEnv,
+} from './lib.mjs'
+
+const PORT = Number(process.env.PORT) || 3000
+
+/**
+ * Refuse to start when the frontend port is taken.
+ *
+ * Nuxt's dev server does not fail on a busy port - it falls back to a
+ * random one. The OAuth consumer in Drupal is registered against a fixed
+ * callback URL, so the login round trip then fails with a bare
+ * `invalid_client` from Drupal, pointing nowhere near the real cause.
+ */
+async function ensureFrontendPortFree() {
+  if (!(await isPortOpen('127.0.0.1', PORT))) {
+    return
+  }
+
+  const callback = readEnv().OAUTH_CALLBACK || `http://localhost:${PORT}/callback`
+  exitWithError(
+    `Port ${PORT} is already in use.\n\n` +
+      `  Nuxt would fall back to a random port, and login would then fail with\n` +
+      `  {"error":"invalid_client"} - Drupal has the consumer registered for\n` +
+      `  ${callback}, which would no longer match.\n\n` +
+      `  Free the port (another dev server, or another copy of this project),\n` +
+      `  or commit to a different one: set OAUTH_CALLBACK in .env to the port\n` +
+      `  you want, re-run \`npm run provision\` to re-register the consumer,\n` +
+      `  then start with \`PORT=<port> npm run dev\`.`
+  )
+}
 
 async function main() {
   await ensureBackend()
-  console.log('Starting the Nuxt dev server -> http://localhost:3000')
+  ensureOauthClientId()
+  await ensureFrontendPortFree()
+  console.log(`Starting the Nuxt dev server -> http://localhost:${PORT}`)
   console.log('')
   process.exitCode = await foregroundNpm(['run', 'dev'], { cwd: NUXT_DIR })
 }
