@@ -45,6 +45,7 @@ openssl
 openvscode
 phpsab
 phpstan
+PKCE
 recognise
 recognised
 recognises

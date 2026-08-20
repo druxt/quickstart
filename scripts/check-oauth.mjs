@@ -12,6 +12,7 @@
  * unrecognised one is rejected outright.
  */
 
+import crypto from 'node:crypto'
 import http from 'node:http'
 import https from 'node:https'
 import { exitWithError, readEnv } from './lib.mjs'
@@ -48,10 +49,17 @@ async function main() {
     )
   }
 
+  // The consumer requires PKCE, so a request without a challenge is
+  // rejected before anything else is looked at - including the scope.
+  const verifier = 'quickstart-oauth-check-verifier-0123456789'
+  const challenge = crypto.createHash('sha256').update(verifier).digest('base64url')
+
   const url = new URL('/oauth/authorize', env.BASE_URL)
   url.searchParams.set('response_type', 'code')
   url.searchParams.set('client_id', env.OAUTH_CLIENT_ID)
   url.searchParams.set('redirect_uri', env.OAUTH_CALLBACK || 'http://localhost:3000/callback')
+  url.searchParams.set('code_challenge', challenge)
+  url.searchParams.set('code_challenge_method', 'S256')
 
   const { status, body } = await request(url)
 
@@ -66,6 +74,9 @@ async function main() {
   }
 
   console.log(`OAuth consumer recognised (HTTP ${status}).`)
+  if (status >= 400) {
+    console.log(`  (authorize returned ${status}: ${body.slice(0, 200).replace(/\s+/g, ' ')})`)
+  }
 
   // Being recognised is not enough: the consumer also has to have the
   // authorization_code grant enabled, or the code exchange fails with
@@ -108,6 +119,11 @@ async function main() {
     console.warn('  Note: this backend rejects the empty `scope=` that druxt-auth sends')
     console.warn('  by default, so the login button will fail with invalid_request.')
     console.warn('  Configure druxt.auth.scope, and see druxt/druxt-auth#35.')
+  } else if (emptyScope.status !== status) {
+    console.log(
+      `Empty scope changed the response (HTTP ${emptyScope.status}): ` +
+        emptyScope.body.slice(0, 200).replace(/\s+/g, ' ')
+    )
   } else {
     console.log(`Empty scope accepted (HTTP ${emptyScope.status}).`)
   }
