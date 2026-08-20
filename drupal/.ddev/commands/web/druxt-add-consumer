@@ -1,10 +1,10 @@
 #!/bin/bash
 
-## Description: Installs a Simple OAuth consumer for Druxt use on Gitpod.
+## Description: Installs a Simple OAuth consumer for Druxt use.
 ## Usage: druxt-add-consumer
 ## Example: "ddev druxt-add-consumer"
 
-# Create a Druxt consumer.
+# Create a Druxt consumer (simple_oauth 6.x Consumer entity).
 drush php-eval '
 $consumer = \Drupal\consumers\Entity\Consumer::create([
   "owner_id"     => 1,
@@ -14,8 +14,7 @@ $consumer = \Drupal\consumers\Entity\Consumer::create([
   "confidential" => FALSE,
   "pkce"         => TRUE,
   "redirect"     => getenv("OAUTH_CALLBACK") ?: "http://localhost:3000/callback",
-  "image_styles" => [],
-  "roles"        => [],
 ]);
 $consumer->save();
+echo "\nOAUTH_CLIENT_ID=" . $consumer->uuid->value . "\n\n";
 '

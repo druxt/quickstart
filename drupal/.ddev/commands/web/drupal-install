@@ -4,11 +4,23 @@
 ## Usage: drupal-install
 ## Example: "ddev drupal-install"
 
+# Fail fast: a failed step must fail the whole install, not leave a
+# half-provisioned site that later commands "fix" silently.
+set -euo pipefail
+
 # Install composer dependencies.
 composer install
 
 # Install a standard Drupal installation.
 drush -y site:install --site-name='quickstart-druxt-site' standard
+
+# Drupal 11's standard profile no longer creates content types itself -
+# Article and Page ship as separate core recipes. Without them there are
+# no node bundles, and jsonapi_views can't register a route for any
+# node-based view (including the front page).
+drush -y recipe:apply "$(pwd)/core/recipes/article_content_type"
+drush -y recipe:apply "$(pwd)/core/recipes/page_content_type"
+drush -y cache:rebuild
 
 # Enable the Druxt module.
 drush -y pm:enable druxt
@@ -19,10 +31,16 @@ drush role:perm:add anonymous "access druxt resources"
 # Enable the Simple OAuth module for authentication.
 drush -y pm:enable simple_oauth
 
-# Configure and generate keys for Simple OAuth.
+# Configure and generate keys for Simple OAuth. Absolute path on purpose:
+# this command's cwd is /var/www/html (the mounted project root), so a
+# relative ../keys would land OUTSIDE the mount - ephemeral, and not the
+# drupal/keys/ location the config values below resolve to (they are
+# Drupal-side paths, resolved relative to the app root web/).
+KEYS_DIR="/var/www/html/keys"
+mkdir -p "$KEYS_DIR"
 drush -y config:set simple_oauth.settings public_key ../keys/public.key
 drush -y config:set simple_oauth.settings private_key ../keys/private.key
-drush simple-oauth:generate-keys ../keys
+drush simple-oauth:generate-keys "$KEYS_DIR"
 
 # Enable authenticated editting via JSON:API.
 drush -y config:set jsonapi.settings read_only 0
