@@ -176,6 +176,10 @@ jobs:
           files: ./nuxt/coverage/clover.xml
           name: codecov-umbrella
           fail_ci_if_error: false
+          # Protected branches reject tokenless uploads ("Token required
+          # because branch is protected"), which is what leaves the README
+          # coverage badge empty. Needs a CODECOV_TOKEN repository secret.
+          token: ${{ secrets.CODECOV_TOKEN }}
 
   test_e2e:
     needs: build
