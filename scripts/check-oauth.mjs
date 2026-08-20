@@ -19,7 +19,7 @@ import path from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { exitWithError, readEnv } from './lib.mjs'
 
-function parse(response) {
+export function parse(response) {
   try {
     return JSON.parse(response.body)
   } catch {
@@ -33,7 +33,7 @@ function parse(response) {
  * recognise: an earlier version only looked for known error strings, so
  * unrelated failures were reported as passes.
  */
-function assertAuthorizeAccepted(response, label, env) {
+export function assertAuthorizeAccepted(response, label, env) {
   if ([200, 301, 302, 303, 307, 308].includes(response.status)) {
     return
   }
@@ -61,7 +61,7 @@ function assertAuthorizeAccepted(response, label, env) {
 }
 
 /** OAuth errors carry the useful detail in `hint`; surface it. */
-function describe(response) {
+export function describe(response) {
   try {
     const parsed = JSON.parse(response.body)
     return `${parsed.error || '?'} - ${parsed.hint || parsed.error_description || ''}`
