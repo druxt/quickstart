@@ -15,6 +15,28 @@ fi
 
 # Create a Druxt consumer (simple_oauth 6.x Consumer entity).
 drush -r "$DRUPAL_ROOT" php-eval '
+// Simple OAuth 6 rejects an authorize request when it cannot resolve a
+// scope, and its default provider is "Dynamic (entity)" with no scopes
+// shipped - so a fresh site has none and every login fails with
+// "Check the `scope` parameter", whether the frontend sends a scope or
+// not. Create one and make it the consumer default, which is what
+// ScopeRepository::finalizeScopes() falls back to.
+$scope_id = "druxt";
+if (!\Drupal::entityTypeManager()->getStorage("oauth2_scope")->load($scope_id)) {
+  \Drupal\simple_oauth\Entity\Oauth2Scope::create([
+    "id" => $scope_id,
+    "name" => $scope_id,
+    "description" => "Access granted to the Druxt frontend.",
+    "grant_types" => [
+      "authorization_code" => ["status" => TRUE, "description" => "Authorization code grant."],
+      "refresh_token" => ["status" => TRUE, "description" => "Refresh token grant."],
+    ],
+    "umbrella" => FALSE,
+    "granularity_id" => "role",
+    "granularity_configuration" => ["role" => "authenticated"],
+  ])->save();
+}
+
 $client_id = getenv("OAUTH_CLIENT_ID") ?: \Drupal::service("uuid")->generate();
 $consumer = \Drupal\consumers\Entity\Consumer::create([
   "owner_id"     => 1,
@@ -34,6 +56,10 @@ $consumer = \Drupal\consumers\Entity\Consumer::create([
   // fails with unsupported_grant_type. refresh_token lets the frontend
   // renew a session without sending the user back through login.
   "grant_types"  => ["authorization_code", "refresh_token"],
+  // The default scope for this grant: with it set, a request that sends
+  // no scope (or an empty one, as druxt-auth does) resolves to this
+  // rather than being rejected.
+  "authorization_code_scopes" => [$scope_id],
   "redirect"     => getenv("OAUTH_CALLBACK") ?: "http://localhost:3000/callback",
 ]);
 // Validate before saving: these fields are required, but only the

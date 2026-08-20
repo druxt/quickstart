@@ -125,11 +125,13 @@ async function main() {
   const emptyScope = await request(emptyScopeUrl)
 
   if (emptyScope.body.includes('Check the `scope` parameter')) {
-    console.warn('')
-    console.warn('  Note: this backend rejects the empty `scope=` that druxt-auth sends')
-    console.warn('  by default, so the login button will fail with invalid_request.')
-    console.warn('  Configure druxt.auth.scope, and see druxt/druxt-auth#35.')
-    console.warn(`  empty scope -> ${describe(emptyScope)}`)
+    exitWithError(
+      'The backend cannot resolve a scope for this consumer.\n\n' +
+        `  ${describe(emptyScope)}\n\n` +
+        '  Login fails with invalid_request whether the frontend sends a scope\n' +
+        '  or not, so provisioning must create an oauth2_scope and set it as the\n' +
+        "  consumer's authorization_code_scopes. Re-run `npm run provision`."
+    )
   } else if (emptyScope.status !== status) {
     console.log(`  empty scope -> ${describe(emptyScope)}`)
   } else {
