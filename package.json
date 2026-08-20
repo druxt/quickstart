@@ -17,6 +17,7 @@
     "drush": "node scripts/drush.mjs",
     "xdebug": "node scripts/xdebug.mjs",
     "info": "node scripts/info.mjs",
+    "check:oauth": "node scripts/check-oauth.mjs",
     "reset": "node scripts/reset.mjs",
     "postinstall": "node scripts/postinstall.mjs",
     "lint:js": "eslint scripts",

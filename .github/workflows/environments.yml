@@ -53,7 +53,14 @@ jobs:
 
       - name: Create the OAuth consumer
         working-directory: drupal
-        run: ddev druxt-add-consumer
+        run: |
+          ddev druxt-add-consumer | tee /tmp/consumer.txt
+          grep -o 'OAUTH_CLIENT_ID=.*' /tmp/consumer.txt >> ../.env
+
+      # The container path builds its consumer with its own script, so
+      # the local path's coverage does not extend to it.
+      - name: OAuth consumer is recognised
+        run: npm run check:oauth
 
       # From inside the web container: no dependency on the runner
       # resolving *.ddev.site. -sS so a failure still prints why.
@@ -84,7 +91,9 @@ jobs:
 
       - name: Create the OAuth consumer
         working-directory: drupal
-        run: lando druxt-add-consumer
+        run: |
+          lando druxt-add-consumer | tee /tmp/consumer.txt
+          grep -o 'OAUTH_CLIENT_ID=.*' /tmp/consumer.txt >> ../.env
 
       # Checked from the host over the Lando URL, which is the path a
       # user actually takes. `via: nginx` puts the web server in its own
@@ -98,6 +107,9 @@ jobs:
           URL="${URL:-http://druxt-quickstart.lndo.site}"
           echo "Checking $URL/jsonapi"
           curl -sS "$URL/jsonapi" | tee /dev/stderr | grep -q '"jsonapi"'
+          # .env still holds the DDEV URL copied from .env.example.
+          sed -i "s#^BASE_URL=.*#BASE_URL=$URL#" ../.env
+          cd .. && npm run check:oauth
 
   devcontainer:
     name: Dev container

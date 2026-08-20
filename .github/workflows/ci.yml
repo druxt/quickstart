@@ -210,6 +210,11 @@ jobs:
           WEBSERVER_HOST: 127.0.0.1
           WEBSERVER_PORT: 8888
 
+      # Anonymous JSON:API never touches OAuth, so nothing else here
+      # notices a consumer the backend cannot look up.
+      - name: OAuth consumer is recognised
+        run: npm run check:oauth
+
       - name: Install Nuxt dependencies
         working-directory: nuxt
         run: npm install
@@ -277,6 +282,10 @@ jobs:
         run: |
           . ./.env
           curl -sf "${BASE_URL}/jsonapi" | grep -q '"jsonapi"'
+
+      - name: OAuth consumer is recognised
+        working-directory: site
+        run: npm run check:oauth
 
       - name: Frontend builds against the live backend
         working-directory: site/nuxt

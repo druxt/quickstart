@@ -252,7 +252,10 @@ test_e2e:
     - .devtools/assemble
     - .devtools/provision
     - .devtools/start
-    - cd ../nuxt
+    # Anonymous JSON:API never touches OAuth, so nothing else here
+    # notices a consumer the backend cannot look up.
+    - cd .. && npm run check:oauth
+    - cd nuxt
     - npm install
     - npx cypress install
     - npm run test:e2e

@@ -15,9 +15,16 @@ fi
 
 # Create a Druxt consumer (simple_oauth 6.x Consumer entity).
 drush -r "$DRUPAL_ROOT" php-eval '
+$client_id = getenv("OAUTH_CLIENT_ID") ?: \Drupal::service("uuid")->generate();
 $consumer = \Drupal\consumers\Entity\Consumer::create([
   "owner_id"     => 1,
-  "uuid"         => getenv("OAUTH_CLIENT_ID") ?: \Drupal::service("uuid")->generate(),
+  // client_id, not just uuid: simple_oauth 6 looks consumers up by this
+  // field, and consumers only enforces it through form validation, so a
+  // programmatic save leaves it empty and every OAuth request fails with
+  // invalid_client. Same value as the uuid so one ID identifies the
+  // consumer everywhere.
+  "client_id"    => $client_id,
+  "uuid"         => $client_id,
   "label"        => "Druxt",
   "description"  => "DruxtJS is a bridge between frameworks, Drupal in the back, Nuxt in the front.\n\nhttps://druxtjs.org",
   "confidential" => FALSE,
@@ -25,5 +32,5 @@ $consumer = \Drupal\consumers\Entity\Consumer::create([
   "redirect"     => getenv("OAUTH_CALLBACK") ?: "http://localhost:3000/callback",
 ]);
 $consumer->save();
-echo "\nOAUTH_CLIENT_ID=" . $consumer->uuid->value . "\n\n";
+echo "\nOAUTH_CLIENT_ID=" . $consumer->getClientId() . "\n\n";
 '
