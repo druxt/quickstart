@@ -1,5 +1,8 @@
 # Druxt Quickstart
 
+[![CI](https://github.com/druxt/quickstart/actions/workflows/ci.yml/badge.svg?branch=develop)](https://github.com/druxt/quickstart/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/druxt/quickstart/branch/develop/graph/badge.svg)](https://codecov.io/gh/druxt/quickstart)
+
 > One click, fully Decoupled Drupal with DruxtJS.
 
 Druxt Quickstart provides a Drupal and Nuxt mono-repo to get you started with DruxtJS power decoupled Drupal development.
