@@ -38,6 +38,7 @@
   },
   "devDependencies": {
     "@babel/eslint-parser": "^7.19.1",
+    "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "@nuxtjs/eslint-config": "^11.0.0",
     "@nuxtjs/eslint-module": "^3.1.0",
     "@nuxtjs/storybook": "^4.2.0",
