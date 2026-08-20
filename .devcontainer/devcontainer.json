@@ -1,0 +1,68 @@
+{
+  "name": "Druxt Quickstart",
+  "image": "mcr.microsoft.com/devcontainers/base:trixie",
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "16.18.1"
+    },
+    "ghcr.io/devcontainers/features/php:1": {
+      "version": "8.4",
+      "installComposer": true
+    },
+    "ghcr.io/devcontainers-extra/features/mise:1": {},
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+  // Pin the backend port: .devtools/start otherwise auto-discovers the
+  // first free port from 8888 up, and a container that picked 8889 would
+  // sit behind a forward that only maps 8888.
+  "containerEnv": {
+    "WEBSERVER_PORT": "8888",
+    // Node and PHP are provided by the devcontainer features above -
+    // mise.toml's pins are for host users. Without this, `mise install`
+    // (including the mise extension's missing-tools check) tries to
+    // BUILD PHP from source via the vfox-php plugin inside the
+    // container, which is slow, redundant, and fails on missing build
+    // deps (gdlib). mise tasks (`mise run setup` etc.) are unaffected.
+    "MISE_DISABLE_TOOLS": "node,php"
+  },
+  "forwardPorts": [8888, 3000],
+  "portsAttributes": {
+    "8888": {
+      "label": "Drupal backend (drupal/.devtools)",
+      "onAutoForward": "silent"
+    },
+    "3000": {
+      "label": "Nuxt frontend",
+      "onAutoForward": "silent"
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "settings": {
+        // Absolute path to where the mise feature installs the binary
+        // (gh-release feature default binLocation). The extension's
+        // default bare "mise" value trips its workspace-binary security
+        // check - a bare name is treated as workspace-relative, fails
+        // to hash (ENOENT), and re-prompts for approval on every config
+        // reload. An absolute machine-scope path never prompts.
+        "mise.binPath": "/usr/local/bin/mise"
+      },
+      "extensions": [
+        "hverlin.mise-vscode",
+        "davidanson.vscode-markdownlint",
+        "streetsidesoftware.code-spell-checker",
+        "EditorConfig.EditorConfig",
+        "redhat.vscode-yaml",
+        "bmewburn.vscode-intelephense-client",
+        "ValeryanM.vscode-phpsab",
+        "SanderRonde.phpstan-vscode",
+        "xdebug.php-debug",
+        "Stanislav.vscode-drupal",
+        "Vue.volar",
+        "dbaeumer.vscode-eslint"
+      ]
+    }
+  },
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
+  "remoteUser": "vscode"
+}
