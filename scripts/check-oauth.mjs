@@ -15,6 +15,8 @@
 import crypto from 'node:crypto'
 import http from 'node:http'
 import https from 'node:https'
+import path from 'node:path'
+import { pathToFileURL } from 'node:url'
 import { exitWithError, readEnv } from './lib.mjs'
 
 function parse(response) {
@@ -92,7 +94,7 @@ function request(url, postBody) {
   })
 }
 
-async function main() {
+export async function checkOauth() {
   const env = readEnv()
   if (!env.BASE_URL || !env.OAUTH_CLIENT_ID) {
     exitWithError(
@@ -162,4 +164,9 @@ async function main() {
   console.log(`Empty scope accepted (HTTP ${emptyScope.status}).`)
 }
 
-main().catch((error) => exitWithError(`OAuth check failed: ${error.message}`))
+const invokedDirectly =
+  process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href
+
+if (invokedDirectly) {
+  checkOauth().catch((error) => exitWithError(`OAuth check failed: ${error.message}`))
+}

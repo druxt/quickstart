@@ -5,6 +5,7 @@
  * DDEV / remote backends are used as-is and never started from here.
  */
 
+import { checkOauth } from './check-oauth.mjs'
 import {
   NUXT_DIR,
   ensureBackend,
@@ -81,6 +82,11 @@ async function main() {
   ensureOauthClientId()
   ensureCallbackMatchesPort()
   await ensureFrontendPortFree()
+  // Confirm the backend will actually accept this consumer. Nuxt reads
+  // OAUTH_CLIENT_ID once at startup, so a stale value - or a consumer
+  // left over from an older provision - shows up only as a failed login
+  // in the browser, with nothing in the terminal to explain it.
+  await checkOauth()
   console.log(`Starting the Nuxt dev server -> http://localhost:${PORT}`)
   console.log('')
   process.exitCode = await foregroundNpm(['run', 'dev'], { cwd: NUXT_DIR })
