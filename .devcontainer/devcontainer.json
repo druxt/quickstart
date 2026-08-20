@@ -9,7 +9,17 @@
       "version": "8.4",
       "installComposer": true
     },
-    "ghcr.io/devcontainers-extra/features/mise:1": {},
+    // Installed through gh-release rather than the mise feature: that
+    // feature asks for the "latest" jdx/mise release and does not expose
+    // a tag filter, and mise now publishes vfox-* releases from the same
+    // repository. The resolver picked vfox-v2026.8.15, found no matching
+    // asset, and every container build failed. The regex keeps us on
+    // mise's own v-tags while still tracking the newest one.
+    "ghcr.io/devcontainers-extra/features/gh-release:1": {
+      "repo": "jdx/mise",
+      "binaryNames": "mise",
+      "releaseTagRegex": "^v[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
     "ghcr.io/devcontainers/features/github-cli:1": {}
   },
   // Pin the backend port: .devtools/start otherwise auto-discovers the
