@@ -17,6 +17,16 @@ import http from 'node:http'
 import https from 'node:https'
 import { exitWithError, readEnv } from './lib.mjs'
 
+/** OAuth errors carry the useful detail in `hint`; surface it. */
+function describe(response) {
+  try {
+    const parsed = JSON.parse(response.body)
+    return `${parsed.error || '?'} - ${parsed.hint || parsed.error_description || ''}`
+  } catch {
+    return response.body.slice(0, 300).replace(/\s+/g, ' ')
+  }
+}
+
 function request(url, postBody) {
   return new Promise((resolve, reject) => {
     const client = url.protocol === 'https:' ? https : http
@@ -75,7 +85,7 @@ async function main() {
 
   console.log(`OAuth consumer recognised (HTTP ${status}).`)
   if (status >= 400) {
-    console.log(`  (authorize returned ${status}: ${body.slice(0, 200).replace(/\s+/g, ' ')})`)
+    console.log(`  authorize without scope -> ${describe({ status, body })}`)
   }
 
   // Being recognised is not enough: the consumer also has to have the
@@ -119,11 +129,9 @@ async function main() {
     console.warn('  Note: this backend rejects the empty `scope=` that druxt-auth sends')
     console.warn('  by default, so the login button will fail with invalid_request.')
     console.warn('  Configure druxt.auth.scope, and see druxt/druxt-auth#35.')
+    console.warn(`  empty scope -> ${describe(emptyScope)}`)
   } else if (emptyScope.status !== status) {
-    console.log(
-      `Empty scope changed the response (HTTP ${emptyScope.status}): ` +
-        emptyScope.body.slice(0, 200).replace(/\s+/g, ' ')
-    )
+    console.log(`  empty scope -> ${describe(emptyScope)}`)
   } else {
     console.log(`Empty scope accepted (HTTP ${emptyScope.status}).`)
   }
