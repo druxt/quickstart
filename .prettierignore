@@ -2,3 +2,4 @@ nuxt/
 drupal/
 package-lock.json
 styles/
+coverage/
