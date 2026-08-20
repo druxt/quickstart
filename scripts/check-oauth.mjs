@@ -17,6 +17,47 @@ import http from 'node:http'
 import https from 'node:https'
 import { exitWithError, readEnv } from './lib.mjs'
 
+function parse(response) {
+  try {
+    return JSON.parse(response.body)
+  } catch {
+    return null
+  }
+}
+
+/**
+ * A usable authorize endpoint sends the visitor to the login form. Treat
+ * everything else as a failure, including responses this script does not
+ * recognise: an earlier version only looked for known error strings, so
+ * unrelated failures were reported as passes.
+ */
+function assertAuthorizeAccepted(response, label, env) {
+  if ([200, 301, 302, 303, 307, 308].includes(response.status)) {
+    return
+  }
+
+  const error = parse(response)
+  if (error && error.error === 'invalid_client') {
+    exitWithError(
+      `Drupal does not recognise OAUTH_CLIENT_ID (${env.OAUTH_CLIENT_ID}).\n\n` +
+        '  Login fails while the rest of the site works, because anonymous\n' +
+        '  JSON:API never touches OAuth.\n\n' +
+        '  Re-run `npm run provision` to recreate the consumer.'
+    )
+  }
+  if (error && String(error.hint || '').includes('scope')) {
+    exitWithError(
+      `The backend cannot resolve a scope for this consumer (${label}).\n\n` +
+        `  ${describe(response)}\n\n` +
+        '  Provisioning must create an oauth2_scope and set it as the\n' +
+        "  consumer's authorization_code_scopes. Re-run `npm run provision`."
+    )
+  }
+  exitWithError(
+    `Unexpected answer from ${label} (HTTP ${response.status}).\n\n  ${describe(response)}`
+  )
+}
+
 /** OAuth errors carry the useful detail in `hint`; surface it. */
 function describe(response) {
   try {
@@ -71,27 +112,15 @@ async function main() {
   url.searchParams.set('code_challenge', challenge)
   url.searchParams.set('code_challenge_method', 'S256')
 
-  const { status, body } = await request(url)
+  const authorize = await request(url)
+  assertAuthorizeAccepted(authorize, 'authorize', env)
+  console.log(`OAuth consumer recognised (HTTP ${authorize.status}).`)
 
-  if (body.includes('invalid_client')) {
-    exitWithError(
-      `Drupal does not recognise OAUTH_CLIENT_ID (${env.OAUTH_CLIENT_ID}).\n\n` +
-        '  Login fails with {"error":"invalid_client"} while the rest of the site\n' +
-        '  works, because anonymous JSON:API never touches OAuth.\n\n' +
-        '  Re-run `npm run provision` to recreate the consumer, then check that\n' +
-        '  OAUTH_CLIENT_ID in .env matches its Client ID field.'
-    )
-  }
-
-  console.log(`OAuth consumer recognised (HTTP ${status}).`)
-  if (status >= 400) {
-    console.log(`  authorize without scope -> ${describe({ status, body })}`)
-  }
-
-  // Being recognised is not enough: the consumer also has to have the
-  // authorization_code grant enabled, or the code exchange fails with
-  // unsupported_grant_type after the user has already logged in. Sending
-  // a deliberately invalid code is enough to tell the two apart.
+  // Being recognised is not enough: the consumer also needs the
+  // authorization_code grant, or login fails at the code exchange after
+  // the user has already signed in. A deliberately invalid code should
+  // be rejected as a bad *code* - any other answer means something else
+  // is wrong.
   const tokenUrl = new URL('/oauth/token', env.BASE_URL)
   const form = new URLSearchParams({
     grant_type: 'authorization_code',
@@ -102,41 +131,35 @@ async function main() {
   }).toString()
 
   const token = await request(tokenUrl, form)
+  const tokenError = parse(token)
 
-  if (token.body.includes('unsupported_grant_type')) {
+  if (!tokenError || typeof tokenError.error !== 'string') {
+    exitWithError(
+      `Unexpected answer from the token endpoint (HTTP ${token.status}).\n\n  ${describe(token)}`
+    )
+  }
+  if (tokenError.error === 'unsupported_grant_type') {
     exitWithError(
       'The consumer does not have the authorization_code grant enabled.\n\n' +
-        '  Login gets as far as the code exchange and then fails with\n' +
-        '  {"error":"unsupported_grant_type"}.\n\n' +
+        '  Login reaches the code exchange and fails there.\n' +
         '  Re-run `npm run provision` to recreate the consumer.'
     )
   }
-
+  if (tokenError.error !== 'invalid_grant' && tokenError.error !== 'invalid_request') {
+    exitWithError(
+      `The token endpoint rejected the exchange for an unexpected reason.\n\n  ${describe(token)}`
+    )
+  }
   console.log('Authorization code grant enabled.')
 
-  // druxt-auth sends `scope=` empty: @nuxtjs/auth-next defaults the
-  // option to [], its getter joins that to '', and its query encoder
-  // drops undefined but keeps empty strings. Probing with the same
-  // parameter tells us whether that empty value is what Drupal rejects,
-  // separately from anything this repo controls. Reported, not fatal -
-  // the fix for it lives in druxt-auth.
+  // druxt-auth sends `scope=` empty (@nuxtjs/auth-next defaults the
+  // option to [] and its encoder keeps empty strings), so the real login
+  // request has to be accepted with that parameter present too.
   const emptyScopeUrl = new URL(url)
   emptyScopeUrl.searchParams.set('scope', '')
   const emptyScope = await request(emptyScopeUrl)
-
-  if (emptyScope.body.includes('Check the `scope` parameter')) {
-    exitWithError(
-      'The backend cannot resolve a scope for this consumer.\n\n' +
-        `  ${describe(emptyScope)}\n\n` +
-        '  Login fails with invalid_request whether the frontend sends a scope\n' +
-        '  or not, so provisioning must create an oauth2_scope and set it as the\n' +
-        "  consumer's authorization_code_scopes. Re-run `npm run provision`."
-    )
-  } else if (emptyScope.status !== status) {
-    console.log(`  empty scope -> ${describe(emptyScope)}`)
-  } else {
-    console.log(`Empty scope accepted (HTTP ${emptyScope.status}).`)
-  }
+  assertAuthorizeAccepted(emptyScope, 'authorize with an empty scope', env)
+  console.log(`Empty scope accepted (HTTP ${emptyScope.status}).`)
 }
 
 main().catch((error) => exitWithError(`OAuth check failed: ${error.message}`))
