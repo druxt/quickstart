@@ -1,0 +1,16 @@
+{
+  "recommendations": [
+    "hverlin.mise-vscode",
+    "davidanson.vscode-markdownlint",
+    "streetsidesoftware.code-spell-checker",
+    "EditorConfig.EditorConfig",
+    "redhat.vscode-yaml",
+    "bmewburn.vscode-intelephense-client",
+    "ValeryanM.vscode-phpsab",
+    "SanderRonde.phpstan-vscode",
+    "xdebug.php-debug",
+    "Stanislav.vscode-drupal",
+    "Vue.volar",
+    "dbaeumer.vscode-eslint"
+  ]
+}
