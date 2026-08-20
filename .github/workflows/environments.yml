@@ -107,8 +107,10 @@ jobs:
           URL="${URL:-http://druxt-quickstart.lndo.site}"
           echo "Checking $URL/jsonapi"
           curl -sS "$URL/jsonapi" | tee /dev/stderr | grep -q '"jsonapi"'
-          # .env still holds the DDEV URL copied from .env.example.
-          sed -i "s#^BASE_URL=.*#BASE_URL=$URL#" ../.env
+          # Write .env outright: unlike DDEV there is no hook seeding it,
+          # so a substitution has nothing to match and the check aborts.
+          printf 'BASE_URL=%s\n' "$URL" > ../.env
+          grep -o 'OAUTH_CLIENT_ID=.*' /tmp/consumer.txt >> ../.env
           cd .. && npm run check:oauth
 
   devcontainer:
