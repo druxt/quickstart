@@ -1,54 +1,447 @@
 stages:
+  - lint
   - build
   - test
+
+variables:
+  PHP_APT_PACKAGES: 'git unzip libsqlite3-dev libzip-dev libicu-dev libpng-dev libjpeg62-turbo-dev libfreetype6-dev libonig-dev libxml2-dev'
+  PHP_EXTENSIONS: 'mbstring pdo_sqlite intl gd xml zip opcache'
+  CYPRESS_APT_PACKAGES: 'libgtk2.0-0 libgtk-3-0 libgbm-dev libnotify-dev libnss3 libxss1 libasound2 libxtst6 xauth xvfb'
 
 cache:
   paths:
     - drupal/vendor/
+    - nuxt/node_modules/
 
-build:
-  stage: build
-  image: php:7.4
+#
+# --- Lint Stage ---
+#
+# Root-level tooling only (package.json at the repo root) - none of this
+# needs PHP/Composer or nuxt/'s own dependencies, so it stays off the
+# heavier .php-node-setup image entirely.
+.node-lint:
+  # 22, not this repo's pinned 16 - the lint
+  # tools themselves need it: cspell requires >=22.18.0, markdownlint-cli2
+  # >=22, commitlint >=22.12.0. This template only runs root-level
+  # tooling, never touches the app's own runtime.
+  image: node:22
+  cache:
+    key:
+      files:
+        - package-lock.json
+    paths:
+      - node_modules/
+  before_script:
+    - npm install
+
+lint:js:
+  extends: .node-lint
+  stage: lint
+  interruptible: true
+  script:
+    - npm run lint:js
+
+lint:format:
+  extends: .node-lint
+  stage: lint
+  interruptible: true
+  script:
+    - npm run lint:format
+
+lint:cspell:
+  extends: .node-lint
+  stage: lint
+  interruptible: true
+  script:
+    - npm run lint:cspell
+
+lint:md:
+  extends: .node-lint
+  stage: lint
+  interruptible: true
+  script:
+    - npm run lint:md
+
+lint:knip:
+  extends: .node-lint
+  stage: lint
+  interruptible: true
+  script:
+    - npm run lint:knip
+
+lint:audit:
+  extends: .node-lint
+  stage: lint
+  interruptible: true
+  script:
+    - npm run lint:audit
+
+lint:renovate:
+  extends: .node-lint
+  stage: lint
+  interruptible: true
+  script:
+    - npm run lint:renovate
+
+# Only checks the most recent commit - good enough to catch the common
+# case (a single non-conforming commit message) without the complexity of
+# resolving a full MR commit range across both push and merge_request
+# pipeline triggers.
+lint:commit:
+  extends: .node-lint
+  stage: lint
+  interruptible: true
+  script:
+    - npx commitlint --from HEAD~1 --to HEAD --verbose
+
+lint:json:
+  stage: lint
+  interruptible: true
+  image: python:3-slim
+  script:
+    - |
+      rc=0; count=0
+      while IFS= read -r -d '' f; do
+        count=$((count + 1))
+        if python3 -m json.tool "$f" > /dev/null 2>&1; then
+          echo "  [PASS] $f"
+        else
+          echo "  [FAIL] $f"
+          rc=1
+        fi
+      done < <(find . -name '*.json' -not -path '*/.git/*' -not -path '*/node_modules/*' \
+        -not -path '*/nuxt/*' -not -path '*/drupal/*' -not -path '*/.vscode/*' -not -path '*/.devcontainer/*' -print0)
+      echo "--- $count JSON file(s) checked ---"
+      exit "$rc"
+
+lint:shell:
+  stage: lint
+  interruptible: true
+  image: bash:5
+  script:
+    - |
+      rc=0; count=0
+      while IFS= read -r -d '' f; do
+        count=$((count + 1))
+        if bash -n "$f" 2>/dev/null; then
+          echo "  [PASS] $f"
+        else
+          echo "  [FAIL] $f"
+          rc=1
+        fi
+      done < <(find . -name '*.sh' -not -path '*/.git/*' -not -path '*/node_modules/*' \
+        -not -path '*/nuxt/*' -not -path '*/drupal/*' -print0)
+      echo "--- $count shell file(s) checked ---"
+      exit "$rc"
+
+lint:yaml:
+  stage: lint
+  interruptible: true
+  image: python:3-slim
+  script:
+    - pip install yamllint -q
+    - 'yamllint -d "{extends: default, rules: {line-length: {max: 200, level: warning}}}" .gitlab-ci.yml .github/workflows/ci.yml'
+
+# Prose-quality lint for README.md: flags AI-generated-text tells (em-dash overuse,
+# hedging, anthropomorphic verbs, overused vocabulary, etc.) via the
+# vale-ai-tells style package, scoped by .vale.ini to hand-authored prose
+# only. Blocking: all real findings against current content are fixed,
+# and ai-tells.ColonUsage is disabled (see the comment in .vale.ini) since
+# it can't tell this repo's "**term**: Description" convention apart from
+# a genuine AI tell.
+lint:vale:
+  stage: lint
+  interruptible: true
+  image: python:3-slim
+  script:
+    - |
+      vale_version="3.17.1"
+      arch="$(uname -m)"
+      case "$arch" in
+        aarch64|arm64)
+          vale_arch=arm64
+          vale_sha256=92d91ebf9ee69ec077379be95cd09e6710ab33d3d5bab66bb482e66ebc80dc23
+          ;;
+        x86_64)
+          vale_arch=64-bit
+          vale_sha256=db947f89f2292e6a0381a61de155f6a5f5cb4cb460ca178ea412ef605559cefd
+          ;;
+        *) echo "Unsupported architecture: $arch" >&2; exit 1 ;;
+      esac
+      apt-get update -yqq && apt-get install -yqq curl >/dev/null
+      curl -sL --max-time 60 "https://github.com/vale-cli/vale/releases/download/v${vale_version}/vale_${vale_version}_Linux_${vale_arch}.tar.gz" -o /tmp/vale.tar.gz
+      echo "${vale_sha256}  /tmp/vale.tar.gz" | sha256sum -c - || { echo "vale checksum mismatch" >&2; exit 1; }
+      tar -xzf /tmp/vale.tar.gz -C /usr/local/bin vale
+      chmod +x /usr/local/bin/vale
+    - |
+      ai_tells_version="1.31.0"
+      ai_tells_sha256="bc1267248f13e65928475c439ad7ae1bf806a20d09254c08d7d8c4a9c8b811f0"
+      curl -sL --max-time 60 "https://github.com/tbhb/vale-ai-tells/releases/download/v${ai_tells_version}/ai-tells.zip" -o /tmp/ai-tells.zip
+      echo "${ai_tells_sha256}  /tmp/ai-tells.zip" | sha256sum -c - || { echo "ai-tells checksum mismatch" >&2; exit 1; }
+      python3 -c "
+      import zipfile, os
+      with zipfile.ZipFile('/tmp/ai-tells.zip') as z:
+          for name in z.namelist():
+              if name.startswith('ai-tells/styles/') and not name.endswith('/'):
+                  target = os.path.join('styles', name[len('ai-tells/styles/'):])
+                  os.makedirs(os.path.dirname(target), exist_ok=True)
+                  with open(target, 'wb') as f:
+                      f.write(z.read(name))
+      "
+    - vale README.md
+
+.php-node-setup:
+  image: php:8.4
   before_script:
     - apt-get update -yqq
-    - apt-get install -yqq git libpq-dev libcurl4-gnutls-dev libicu-dev libvpx-dev libjpeg-dev libpng-dev libxpm-dev zlib1g-dev libfreetype6-dev libxml2-dev libexpat1-dev libbz2-dev libgmp3-dev libldap2-dev unixodbc-dev libsqlite3-dev libaspell-dev libsnmp-dev libpcre3-dev libtidy-dev libonig-dev libzip-dev nodejs
-
-    # Install PHP extensions
-    - docker-php-ext-install mbstring pdo_pgsql curl intl gd xml zip bz2 opcache
-
-    # Install Composer
-    - curl -sS https://getcomposer.org/installer | php
-
-    # Install NVM and Yarn
+    - apt-get install -yqq $PHP_APT_PACKAGES python3 python3-setuptools build-essential
+    - docker-php-ext-install $PHP_EXTENSIONS
+    - curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer --version=2.10.2
     - curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
     - export NVM_DIR="$HOME/.nvm" && . "$NVM_DIR/nvm.sh" --no-use
     - nvm install && nvm use
-    - npm install --global yarn
 
+build:
+  extends: .php-node-setup
+  stage: build
   script:
-    # Validate and build composer packages
-    - cd drupal && php composer.phar validate && php composer.phar install
+    # Validate and install Composer dependencies.
+    - cd drupal && composer validate --strict && composer install --no-interaction --no-progress
 
-    # Install and build Nuxt
-    - cd ../nuxt && npm install && npm run build
+    # Install Nuxt dependencies. Not `npm run build` - Druxt fetches the
+    # JSON:API index at build time, so building needs a live Drupal
+    # backend. That happens in the test_e2e job, via .devtools/.
+    - cd ../nuxt && npm install
   artifacts:
     paths:
-      - drupal/web
+      - drupal/vendor
+      - nuxt/node_modules
+
+# Component-level unit tests + coverage, mirroring the GitHub Actions
+# workflow's Codecov upload (Jest's collectCoverage is already on in
+# nuxt/jest.config.js). GitLab-native: the coverage: regex below feeds
+# the MR widget/pipeline coverage graph directly, no external service.
+test_unit:
+  extends: .php-node-setup
+  stage: test
+  needs: []
+  coverage: '/All files[^|]*\|[^|]*\s+([\d\.]+)/'
+  script:
+    - cd nuxt
+    - npm install
+    - npm run test:unit
+  artifacts:
+    when: always
+    paths:
+      - nuxt/coverage
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: nuxt/coverage/cobertura-coverage.xml
 
 test_e2e:
+  extends: .php-node-setup
   stage: test
-  image: drud/ddev-gitpod-base:20220817
-  dependencies:
+  needs:
     - build
-  services:
-    - name: docker:dind
-      alias: dockerdaemon
-  variables:
-    DOCKER_HOST: tcp://dockerdaemon:2375/
-    DOCKER_DRIVER: overlay2
-    DOCKER_TLS_CERTDIR: ""
   before_script:
-    - sudo chown -R gitpod:gitpod .
+    - !reference [.php-node-setup, before_script]
+    - apt-get install -yqq $CYPRESS_APT_PACKAGES
   script:
-    # Start DDev and install the Drupal backend.
-    - cd drupal && ddev start -y && ddev drupal-install
+    - cd drupal
+    - .devtools/assemble
+    - .devtools/provision
+    - .devtools/start
+    - cd ../nuxt
+    - npm install
+    - npx cypress install
+    - npm run test:e2e
+  artifacts:
+    when: on_failure
+    paths:
+      - nuxt/cypress/screenshots
+      - nuxt/cypress/videos
+
+# Manual: provisions Drupal + Nuxt and exposes both over Cloudflare Quick
+# Tunnels for as long as PREVIEW_DURATION_SECONDS. Trigger from the pipeline
+# view when you want a live, clickable preview - not part of the normal
+# push/MR pipeline.
+#
+# PREVIEW_MODE (editable when triggering): both (default) | dev | prod
+# - prod: Nuxt build + start on :3000 - test built/bundled behaviour.
+# - dev:  Nuxt dev server on :3001 - HMR picks up edits live. Cloudflared
+#   proxies the port, not the process, so the tunnel URLs survive
+#   frontend restarts on the same port.
+#
+# code-server (VS Code in the browser) and the one-time Drupal login link
+# are owner conveniences: both are skipped unless the PREVIEW_CODE_PASSWORD
+# CI variable is set (job logs may be readable by more people than you
+# think). With it set, code-server requires that password.
+preview:
+  extends: .php-node-setup
+  stage: test
+  when: manual
+  needs: []
+  variables:
+    PREVIEW_DURATION_SECONDS: '3600'
+    PREVIEW_MODE: 'both'
+    # Pinned release + SHA-256 so a changed upstream artifact can never
+    # execute with this job's credentials.
+    CLOUDFLARED_VERSION: '2026.8.2'
+    CLOUDFLARED_SHA256: 'fcfb02b575a52ca1af2e3267af4e1517bcdeb30ac48c834b69abaed3c0576ad2'
+    CODE_SERVER_VERSION: 'v4.132.0'
+  script:
+    - cd drupal
+    - .devtools/assemble
+    - .devtools/provision
+    - .devtools/start
+    - cd ../nuxt
+    - npm install
+
+    # Frontend, prod mode: build + start on :3000.
+    - |
+      if [ "$PREVIEW_MODE" != "dev" ]; then
+        npm run build
+        nohup npm start > /tmp/nuxt-prod.log 2>&1 &
+      fi
+    # Frontend, dev mode: HMR dev server on :3001. Nuxt 2's HMR client is
+    # an EventSource on the same origin, so it flows through the tunnel.
+    - |
+      if [ "$PREVIEW_MODE" != "prod" ]; then
+        nohup npm run dev -- -p 3001 > /tmp/nuxt-dev.log 2>&1 &
+      fi
+
+    - |
+      set -eu
+      [ "$(dpkg --print-architecture)" = "amd64" ]
+      curl -sSL -o cloudflared "https://github.com/cloudflare/cloudflared/releases/download/${CLOUDFLARED_VERSION}/cloudflared-linux-amd64"
+      echo "${CLOUDFLARED_SHA256}  cloudflared" | sha256sum -c -
+      install -m 0755 cloudflared /usr/local/bin/cloudflared
+      nohup cloudflared tunnel --url http://localhost:8888 > /tmp/tunnel-backend.log 2>&1 &
+      if [ "$PREVIEW_MODE" != "dev" ]; then
+        nohup cloudflared tunnel --url http://localhost:3000 > /tmp/tunnel-frontend.log 2>&1 &
+      fi
+      if [ "$PREVIEW_MODE" != "prod" ]; then
+        nohup cloudflared tunnel --url http://localhost:3001 > /tmp/tunnel-frontend-dev.log 2>&1 &
+      fi
+
+    # VS Code in the browser, for poking at the checkout live. Only started
+    # when PREVIEW_CODE_PASSWORD is set: without a password there is nothing
+    # between a public Quick Tunnel URL and a shell in this job.
+    - |
+      set -eu
+      CODE_SERVER_ENABLED=false
+      if [ -n "${PREVIEW_CODE_PASSWORD:-}" ]; then
+        # Pinned .deb + SHA-256, not the mutable install.sh - the
+        # installer script runs with PREVIEW_CODE_PASSWORD in its
+        # environment, so a changed upstream script must never
+        # execute here. Update both together when bumping the version.
+        CODE_SERVER_DEB_SHA256="18e0e69920ab23b725cb219fb42bc045a908421448cf496a3124314e1a02bcf1"
+        curl -fsSL --max-time 120 "https://github.com/coder/code-server/releases/download/${CODE_SERVER_VERSION}/code-server_${CODE_SERVER_VERSION#v}_amd64.deb" -o /tmp/code-server.deb
+        echo "${CODE_SERVER_DEB_SHA256}  /tmp/code-server.deb" | sha256sum -c - || { echo "code-server checksum mismatch" >&2; exit 1; }
+        dpkg -i /tmp/code-server.deb
+        PASSWORD="$PREVIEW_CODE_PASSWORD" nohup code-server --auth password --bind-addr 0.0.0.0:8080 "$CI_PROJECT_DIR" > /tmp/code-server.log 2>&1 &
+        nohup cloudflared tunnel --url http://localhost:8080 > /tmp/tunnel-code.log 2>&1 &
+        CODE_SERVER_ENABLED=true
+      fi
+      echo "CODE_SERVER_ENABLED=$CODE_SERVER_ENABLED" >> code-server.env
+
+    # Clamp the sleep: the job must also cover provisioning and startup.
+    - |
+      set -eu
+      DURATION=$(printf '%s\n' "$PREVIEW_DURATION_SECONDS" | tr -cd '0-9')
+      DURATION=${DURATION:-3600}
+      [ "$DURATION" -le 18000 ] || DURATION=18000
+      echo "PREVIEW_LIVE_SECONDS=$DURATION" >> code-server.env
+
+    - |
+      set -eu
+      . ./code-server.env
+      export CODE_SERVER_ENABLED
+      FAILED=0
+      for i in $(seq 1 30); do
+        BACKEND_URL=$(grep -oE 'https://[a-zA-Z0-9-]+\.trycloudflare\.com' /tmp/tunnel-backend.log 2>/dev/null | head -1 || true)
+        FRONTEND_URL=$(grep -oE 'https://[a-zA-Z0-9-]+\.trycloudflare\.com' /tmp/tunnel-frontend.log 2>/dev/null | head -1 || true)
+        FRONTEND_DEV_URL=$(grep -oE 'https://[a-zA-Z0-9-]+\.trycloudflare\.com' /tmp/tunnel-frontend-dev.log 2>/dev/null | head -1 || true)
+        CODE_URL=$(grep -oE 'https://[a-zA-Z0-9-]+\.trycloudflare\.com' /tmp/tunnel-code.log 2>/dev/null | head -1 || true)
+        READY=1
+        [ -n "$BACKEND_URL" ] || READY=0
+        [ "$PREVIEW_MODE" = "dev" ] || [ -n "$FRONTEND_URL" ] || READY=0
+        [ "$PREVIEW_MODE" = "prod" ] || [ -n "$FRONTEND_DEV_URL" ] || READY=0
+        [ "$CODE_SERVER_ENABLED" != "true" ] || [ -n "$CODE_URL" ] || READY=0
+        if [ "$READY" -eq 1 ]; then break; fi
+        sleep 1
+      done
+
+      # A required tunnel that never came up should fail the job, not
+      # leave it sleeping for the full preview duration.
+      if [ -z "$BACKEND_URL" ]; then echo "backend tunnel not ready"; tail -n 20 /tmp/tunnel-backend.log || true; FAILED=1; fi
+      if [ "$PREVIEW_MODE" != "dev" ] && [ -z "$FRONTEND_URL" ]; then echo "frontend (prod) tunnel not ready"; tail -n 20 /tmp/tunnel-frontend.log || true; FAILED=1; fi
+      if [ "$PREVIEW_MODE" != "prod" ] && [ -z "$FRONTEND_DEV_URL" ]; then echo "frontend (dev) tunnel not ready"; tail -n 20 /tmp/tunnel-frontend-dev.log || true; FAILED=1; fi
+      if [ "$CODE_SERVER_ENABLED" = "true" ] && [ -z "$CODE_URL" ]; then echo "code-server tunnel not ready"; tail -n 20 /tmp/tunnel-code.log || true; FAILED=1; fi
+      [ "$FAILED" -eq 0 ] || exit 1
+
+      echo "=================================================="
+      if [ "$PREVIEW_MODE" != "dev" ]; then
+        echo " Frontend (prod): ${FRONTEND_URL:-not ready - check /tmp/tunnel-frontend.log}"
+      fi
+      if [ "$PREVIEW_MODE" != "prod" ]; then
+        echo " Frontend (dev):  ${FRONTEND_DEV_URL:-not ready - check /tmp/tunnel-frontend-dev.log}  <- HMR: edits appear live"
+      fi
+      echo " Backend:    ${BACKEND_URL:-not ready - check /tmp/tunnel-backend.log}"
+      if [ "$CODE_SERVER_ENABLED" = "true" ]; then
+        # No login link in the log: `drush uli` output is a live
+        # credential, and job logs are readable by more people than
+        # you think even in owner mode. Get one from the code-server
+        # terminal instead - it never touches the log there.
+        echo " Login link: run \`make drush uli\` in a code-server terminal"
+        echo " Code:       ${CODE_URL:-not ready} (password: your PREVIEW_CODE_PASSWORD variable)"
+      else
+        echo " Code:       disabled - set the PREVIEW_CODE_PASSWORD variable to enable"
+      fi
+      echo " Note:       tunnel URLs survive restarts on the same port."
+      echo "             prod does NOT watch files - rebuild it from a"
+      echo "             code-server terminal if you edit and want prod."
+      echo " Live for:   ${PREVIEW_LIVE_SECONDS}s (cancel this job to stop early)"
+      echo "=================================================="
+    - . ./code-server.env && sleep "$PREVIEW_LIVE_SECONDS"
+
+# The documented consumer flow (`npx giget gh:druxt/... my-site
+# --install`) consumes a tarball: no .git, no preinstalled dependencies,
+# and the root npm install stands everything up. git archive produces
+# that same artifact from this exact commit - giget itself can only
+# fetch refs already pushed to GitHub.
+test_giget:
+  extends: .php-node-setup
+  stage: test
+  needs: []
+  script:
+    - git archive --prefix=site/ "$CI_COMMIT_SHA" | tar -x -C /tmp
+    # `env -u CI`: postinstall deliberately steps aside on CI machines -
+    # this job's whole point is to behave like a consumer machine.
+    - cd /tmp/site && env -u CI npm install
+    - . /tmp/site/.env && curl -sf "${BASE_URL}/jsonapi" | grep -q '"jsonapi"'
+    - cd /tmp/site/nuxt && npm run build
+
+# What the root install promises on machines without a working PHP: a
+# giget consumer's `npm install` must never fail, `npm run setup` must
+# fail loudly, and a too-old PHP must be rejected by the preflight.
+test_install_guardrails:
+  stage: test
+  image: node:22
+  needs: []
+  script:
+    # npm install without PHP: exits 0 and points at `npm run setup`.
+    - env -u CI npm install > /tmp/install.log 2>&1
+    - grep -q 'The backend needs PHP' /tmp/install.log
+    # npm run setup without PHP: fails, and says what is missing.
+    - if npm run setup > /tmp/setup.log 2>&1; then echo "setup should have failed"; exit 1; fi
+    - grep -q 'Missing required tools' /tmp/setup.log
+    # Too-old PHP: the version preflight rejects it.
+    - |
+      SHIM=$(mktemp -d)
+      printf '#!/bin/sh\necho 8.2.29\n' > "$SHIM/php"
+      printf '#!/bin/sh\nexit 0\n' > "$SHIM/composer"
+      chmod +x "$SHIM/php" "$SHIM/composer"
+      if PATH="$SHIM:$PATH" npm run setup > /tmp/old-php.log 2>&1; then echo "setup should have failed"; exit 1; fi
+      grep -q 'too old' /tmp/old-php.log
