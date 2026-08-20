@@ -181,6 +181,32 @@ jobs:
           # coverage badge empty. Needs a CODECOV_TOKEN repository secret.
           token: ${{ secrets.CODECOV_TOKEN }}
 
+  # The root scripts run on the app's Node 16, but coverage reporting
+  # needs Node 20+, so the tests run on a modern Node here. They use only
+  # node:test and node:assert, so nothing is installed.
+  test_scripts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Run the script tests with coverage
+        run: npm run test:scripts:coverage
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          files: ./coverage/scripts-lcov.info
+          name: scripts
+          fail_ci_if_error: false
+          token: ${{ secrets.CODECOV_TOKEN }}
+
   test_e2e:
     needs: build
     runs-on: ubuntu-latest

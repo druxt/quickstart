@@ -239,6 +239,18 @@ test_unit:
         coverage_format: cobertura
         path: nuxt/coverage/cobertura-coverage.xml
 
+# Coverage reporting needs Node 20+, and these tests use only node:test
+# and node:assert, so they run on a modern Node with nothing installed.
+test_scripts:
+  stage: test
+  image: node:22
+  needs: []
+  script:
+    - npm run test:scripts:coverage
+  artifacts:
+    paths:
+      - coverage/scripts-lcov.info
+
 test_e2e:
   extends: .php-node-setup
   stage: test

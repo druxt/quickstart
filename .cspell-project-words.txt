@@ -3,6 +3,7 @@ behaviour
 bmewburn
 bootstrapvue
 commitlint
+cweagans
 davidanson
 dbaeumer
 ddev
@@ -12,6 +13,7 @@ drush
 druxt
 druxtjs
 endswith
+extensionless
 gdlib
 giget
 hverlin
@@ -40,6 +42,7 @@ nohup
 nuxt
 nuxtjs
 nvmrc
+Olivero
 opcache
 openssl
 openvscode
