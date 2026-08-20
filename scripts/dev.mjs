@@ -43,9 +43,43 @@ async function ensureFrontendPortFree() {
   )
 }
 
+/**
+ * The consumer is registered for one callback URL. Serving the frontend
+ * on a different port than that URL names fails the same way a busy
+ * port does, just without anything else looking wrong.
+ */
+function ensureCallbackMatchesPort() {
+  const callback = readEnv().OAUTH_CALLBACK
+  if (!callback) {
+    return
+  }
+
+  let parsed
+  try {
+    parsed = new URL(callback)
+  } catch {
+    return
+  }
+
+  const callbackPort = Number(parsed.port) || (parsed.protocol === 'https:' ? 443 : 80)
+  if (callbackPort === PORT) {
+    return
+  }
+
+  exitWithError(
+    `OAUTH_CALLBACK names port ${callbackPort}, but the dev server would run on ${PORT}.\n\n` +
+      `  Login would fail with {"error":"invalid_client"} - Drupal only accepts the\n` +
+      `  callback it has registered (${callback}).\n\n` +
+      `  Either start on that port with \`PORT=${callbackPort} npm run dev\`, or set\n` +
+      `  OAUTH_CALLBACK to port ${PORT} and re-run \`npm run provision\` to\n` +
+      `  re-register the consumer.`
+  )
+}
+
 async function main() {
   await ensureBackend()
   ensureOauthClientId()
+  ensureCallbackMatchesPort()
   await ensureFrontendPortFree()
   console.log(`Starting the Nuxt dev server -> http://localhost:${PORT}`)
   console.log('')
