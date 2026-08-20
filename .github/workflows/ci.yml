@@ -14,13 +14,13 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
           fetch-depth: 2
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           # 22, not this repo's pinned 16 (or the other jobs' 20) - the
           # lint tools themselves need it: cspell requires >=22.18.0,
@@ -128,7 +128,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
@@ -139,7 +139,7 @@ jobs:
           extensions: mbstring, pdo_sqlite, intl, gd, xml, zip, opcache
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
 
@@ -171,7 +171,7 @@ jobs:
       # uploads for public repos are rate-limited and shouldn't fail CI on
       # a starter kit. The token-less integration itself is unchanged.
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v7
         with:
           files: ./nuxt/coverage/clover.xml
           name: codecov-umbrella
@@ -187,12 +187,12 @@ jobs:
   test_scripts:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: '22'
 
@@ -200,7 +200,7 @@ jobs:
         run: npm run test:scripts:coverage
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v7
         with:
           files: ./coverage/scripts-lcov.info
           name: scripts
@@ -211,7 +211,7 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
@@ -222,7 +222,7 @@ jobs:
           extensions: mbstring, pdo_sqlite, intl, gd, xml, zip, opcache
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
 
@@ -255,7 +255,7 @@ jobs:
 
       - name: Upload Cypress artifacts on failure
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: cypress-artifacts
           path: |
@@ -293,7 +293,7 @@ jobs:
         run: npx giget@3.3.1 "gh:${REPO}#${SHA}" site
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version-file: site/.nvmrc
 
@@ -323,12 +323,12 @@ jobs:
   test_install_guardrails:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
 

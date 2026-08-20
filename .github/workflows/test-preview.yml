@@ -47,7 +47,7 @@ jobs:
     # workflow cancels the running preview (concurrency group above).
     timeout-minutes: 360
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
@@ -58,7 +58,7 @@ jobs:
           extensions: mbstring, pdo_sqlite, intl, gd, xml, zip, opcache
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
 
