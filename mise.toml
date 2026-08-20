@@ -1,0 +1,57 @@
+# Toolchain for the whole mono-repo: one `mise install` provides both.
+# Node matches .nvmrc (kept for nvm users); PHP matches drupal/composer.json.
+#
+# No separate "npm" tool: mise has no core plugin for it (npm always ships
+# bundled with Node). This Node version bundles npm 8.19.2, matching
+# package.json's "packageManager" field.
+[tools]
+node = "16.18.1"
+php = "8.4"
+
+[tasks.setup]
+description = "Install frontend deps, provision Drupal (SQLite), start the backend."
+run = "npm run setup"
+
+[tasks.dev]
+description = "Ensure the backend is up, then run the Nuxt dev server (port 3000)."
+run = "npm run dev"
+
+[tasks.build]
+description = "Build the Nuxt frontend for production."
+run = "npm run build"
+
+[tasks.start]
+description = "Ensure the backend is up, then serve the built frontend (port 3000)."
+run = "npm run start"
+
+[tasks.stop]
+description = "Stop the local (.devtools) backend. No-op for DDEV/external backends."
+run = "npm run stop"
+
+[tasks.assemble]
+description = "Install Composer dependencies (backend)."
+run = "npm run assemble"
+
+[tasks.provision]
+description = "Install the site: SQLite, druxt, simple_oauth, OAuth consumer."
+run = "npm run provision"
+
+[tasks.login]
+description = "Print a Drupal one-time login link."
+run = "npm run login"
+
+[tasks.xdebug]
+description = "Enable XDebug step-debugging on the local backend."
+run = "npm run xdebug"
+
+[tasks.info]
+description = "Print a summary of the current environment."
+run = "npm run info"
+
+[tasks.reset]
+description = "Stop the backend and wipe the throwaway SQLite database."
+run = "npm run reset"
+
+[tasks.drush]
+description = "Run a Drush command, e.g. mise run drush cr all."
+run = "npm run drush --"
