@@ -92,6 +92,25 @@ async function main() {
   }
 
   console.log('Authorization code grant enabled.')
+
+  // druxt-auth sends `scope=` empty: @nuxtjs/auth-next defaults the
+  // option to [], its getter joins that to '', and its query encoder
+  // drops undefined but keeps empty strings. Probing with the same
+  // parameter tells us whether that empty value is what Drupal rejects,
+  // separately from anything this repo controls. Reported, not fatal -
+  // the fix for it lives in druxt-auth.
+  const emptyScopeUrl = new URL(url)
+  emptyScopeUrl.searchParams.set('scope', '')
+  const emptyScope = await request(emptyScopeUrl)
+
+  if (emptyScope.body.includes('Check the `scope` parameter')) {
+    console.warn('')
+    console.warn('  Note: this backend rejects the empty `scope=` that druxt-auth sends')
+    console.warn('  by default, so the login button will fail with invalid_request.')
+    console.warn('  Configure druxt.auth.scope, and see druxt/druxt-auth#35.')
+  } else {
+    console.log(`Empty scope accepted (HTTP ${emptyScope.status}).`)
+  }
 }
 
 main().catch((error) => exitWithError(`OAuth check failed: ${error.message}`))
