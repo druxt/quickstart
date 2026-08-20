@@ -1,6 +1,6 @@
 {
   "name": "quickstart-druxt-site",
-  "version": "1.0.0",
+  "version": "0.3.0",
   "private": true,
   "scripts": {
     "build": "nuxt build",

@@ -3,6 +3,7 @@ behaviour
 bmewburn
 bootstrapvue
 commitlint
+cweagans
 davidanson
 dbaeumer
 ddev
@@ -40,6 +41,7 @@ nohup
 nuxt
 nuxtjs
 nvmrc
+Olivero
 opcache
 openssl
 openvscode
