@@ -30,8 +30,8 @@
   "dependencies": {
     "core-js": "3.26.1",
     "dotenv": "^16.0.3",
-    "druxt-auth": "^0.2.0",
-    "druxt-site": "^0.14.0",
+    "druxt-auth": "^0.4.0",
+    "druxt-site": "^0.14.3",
     "nuxt": "2.15.8",
     "vue-server-renderer": "^2.7.14",
     "vue-template-compiler": "^2.7.14"
