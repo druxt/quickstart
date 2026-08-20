@@ -171,7 +171,7 @@ jobs:
       # uploads for public repos are rate-limited and shouldn't fail CI on
       # a starter kit. The token-less integration itself is unchanged.
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v7
         with:
           files: ./nuxt/coverage/clover.xml
           name: codecov-umbrella
@@ -200,7 +200,7 @@ jobs:
         run: npm run test:scripts:coverage
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v7
         with:
           files: ./coverage/scripts-lcov.info
           name: scripts
