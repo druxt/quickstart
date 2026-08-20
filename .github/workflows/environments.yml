@@ -13,8 +13,11 @@ on:
   push:
     paths: &environment-paths
       - '.devcontainer/**'
+      - '.env.example'
       - 'drupal/.ddev/**'
+      - 'drupal/.devtools/**'
       - 'drupal/.lando.yml'
+      - 'package.json'
       - 'drupal/composer.json'
       - 'drupal/composer.lock'
       - 'scripts/**'
