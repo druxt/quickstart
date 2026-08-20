@@ -1,5 +1,8 @@
 # Druxt Quickstart
 
+[![CI](https://github.com/druxt/quickstart/actions/workflows/ci.yml/badge.svg?branch=develop)](https://github.com/druxt/quickstart/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/druxt/quickstart/branch/develop/graph/badge.svg)](https://codecov.io/gh/druxt/quickstart)
+
 > One click, fully Decoupled Drupal with DruxtJS.
 
 Druxt Quickstart provides a Drupal and Nuxt mono-repo to get you started with DruxtJS power decoupled Drupal development.
@@ -22,12 +25,13 @@ npm run dev
 local Drupal 11 + SQLite backend. Needs PHP 8.4 and Composer on `PATH`.
 Without them, it installs the frontend only and prints the next steps.
 
-## Theme branches
+## Themed starts
 
-Start quicker with a pre-installed UI Framework.
+The `theme/bootstrap-vue` and `theme/tailwindcss` branches are frozen on a
+2022 version of this starterkit and do not include the Drupal 11 work.
 
-- [BootstrapVue](https://github.com/druxt/quickstart/tree/theme/bootstrap-vue)
-- [TailwindCSS](https://github.com/druxt/quickstart/tree/theme/tailwindcss)
+They are being replaced with reusable theme packages - see
+[#143](https://github.com/druxt/quickstart/issues/143) to follow progress.
 
 ## Getting started
 
