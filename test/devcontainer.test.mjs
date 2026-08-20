@@ -47,6 +47,21 @@ describe('devcontainer', () => {
     assert.ok(!pattern.test('vfox-v2026.9.0'), 'rejects any vfox release')
   })
 
+  it('picks exactly one asset from a mise release', () => {
+    // mise publishes the same build four ways, and the resolver refuses
+    // to choose between them: "Too many matches found".
+    const release = features['ghcr.io/devcontainers-extra/features/gh-release:1']
+    const published = [
+      'mise-v2026.8.10-linux-x64',
+      'mise-v2026.8.10-linux-x64.tar.gz',
+      'mise-v2026.8.10-linux-x64.tar.xz',
+      'mise-v2026.8.10-linux-x64.tar.zst',
+    ]
+    const pattern = new RegExp(release.assetRegex)
+    const matched = published.filter((asset) => pattern.test(asset))
+    assert.deepEqual(matched, ['mise-v2026.8.10-linux-x64.tar.gz'])
+  })
+
   it('pins the backend port so the forwarded port matches', () => {
     // .devtools/start otherwise takes the first free port from 8888 up,
     // and a container that picked 8889 would forward the wrong one.

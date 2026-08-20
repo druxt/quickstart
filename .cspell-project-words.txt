@@ -13,6 +13,7 @@ drush
 druxt
 druxtjs
 endswith
+extensionless
 gdlib
 giget
 hverlin
