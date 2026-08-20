@@ -1,0 +1,316 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+# Least-privilege: nothing here needs write access to the repo.
+permissions:
+  contents: read
+
+jobs:
+  # Root-level tooling only (package.json at the repo root) - none of this
+  # needs PHP/Composer or nuxt/'s own dependencies.
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 2
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          # 22, not this repo's pinned 16 (or the other jobs' 20) - the
+          # lint tools themselves need it: cspell requires >=22.18.0,
+          # markdownlint-cli2 >=22, commitlint >=22.12.0. This job only
+          # runs root-level tooling, never touches the app's own runtime.
+          node-version: '22'
+          cache: 'npm'
+
+      - run: npm install
+
+      - name: ESLint (scripts/)
+        run: npm run lint:js
+
+      - name: Prettier
+        run: npm run lint:format
+
+      - name: cspell
+        run: npm run lint:cspell
+
+      - name: markdownlint
+        run: npm run lint:md
+
+      - name: knip (unused/unlisted dependencies)
+        run: npm run lint:knip
+
+      - name: npm audit (production dependencies)
+        run: npm run lint:audit
+
+      - name: renovate-config-validator
+        run: npm run lint:renovate
+
+      # Only checks the most recent commit - good enough to catch the
+      # common case (a single non-conforming commit message) without the
+      # complexity of resolving a full PR commit range.
+      - name: commitlint
+        run: npx commitlint --from HEAD~1 --to HEAD --verbose
+
+      - name: JSON sweep
+        run: |
+          rc=0; count=0
+          while IFS= read -r -d '' f; do
+            count=$((count + 1))
+            if python3 -m json.tool "$f" > /dev/null 2>&1; then
+              echo "  [PASS] $f"
+            else
+              echo "  [FAIL] $f"
+              rc=1
+            fi
+          done < <(find . -name '*.json' -not -path '*/.git/*' -not -path '*/node_modules/*' \
+            -not -path '*/nuxt/*' -not -path '*/drupal/*' -not -path '*/.vscode/*' -not -path '*/.devcontainer/*' -print0)
+          echo "--- $count JSON file(s) checked ---"
+          exit "$rc"
+
+      - name: Shell syntax sweep
+        run: |
+          rc=0; count=0
+          while IFS= read -r -d '' f; do
+            count=$((count + 1))
+            if bash -n "$f" 2>/dev/null; then
+              echo "  [PASS] $f"
+            else
+              echo "  [FAIL] $f"
+              rc=1
+            fi
+          done < <(find . -name '*.sh' -not -path '*/.git/*' -not -path '*/node_modules/*' \
+            -not -path '*/nuxt/*' -not -path '*/drupal/*' -print0)
+          echo "--- $count shell file(s) checked ---"
+          exit "$rc"
+
+      - name: yamllint
+        run: |
+          pip install yamllint -q
+          yamllint -d "{extends: default, rules: {line-length: {max: 200, level: warning}}}" .gitlab-ci.yml .github/workflows/ci.yml
+
+      # Prose-quality lint for README.md - see .vale.ini for scoping/exceptions.
+      - name: Install Vale
+        run: |
+          vale_version="3.17.1"
+          vale_sha256="db947f89f2292e6a0381a61de155f6a5f5cb4cb460ca178ea412ef605559cefd"
+          curl -sL --max-time 60 "https://github.com/vale-cli/vale/releases/download/v${vale_version}/vale_${vale_version}_Linux_64-bit.tar.gz" -o /tmp/vale.tar.gz
+          echo "${vale_sha256}  /tmp/vale.tar.gz" | sha256sum -c - || { echo "vale checksum mismatch" >&2; exit 1; }
+          sudo tar -xzf /tmp/vale.tar.gz -C /usr/local/bin vale
+          sudo chmod +x /usr/local/bin/vale
+
+      - name: Install ai-tells style package
+        run: |
+          ai_tells_version="1.31.0"
+          ai_tells_sha256="bc1267248f13e65928475c439ad7ae1bf806a20d09254c08d7d8c4a9c8b811f0"
+          curl -sL --max-time 60 "https://github.com/tbhb/vale-ai-tells/releases/download/v${ai_tells_version}/ai-tells.zip" -o /tmp/ai-tells.zip
+          echo "${ai_tells_sha256}  /tmp/ai-tells.zip" | sha256sum -c - || { echo "ai-tells checksum mismatch" >&2; exit 1; }
+          python3 -c "
+          import zipfile, os
+          with zipfile.ZipFile('/tmp/ai-tells.zip') as z:
+              for name in z.namelist():
+                  if name.startswith('ai-tells/styles/') and not name.endswith('/'):
+                      target = os.path.join('styles', name[len('ai-tells/styles/'):])
+                      os.makedirs(os.path.dirname(target), exist_ok=True)
+                      with open(target, 'wb') as f:
+                          f.write(z.read(name))
+          "
+
+      - name: Vale
+        run: vale README.md
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, pdo_sqlite, intl, gd, xml, zip, opcache
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - name: Validate and install Composer dependencies
+        working-directory: drupal
+        run: composer validate --strict && composer install --no-interaction --no-progress
+
+      # Not `npm run build` - Druxt fetches the JSON:API index at build
+      # time, so building needs a live Drupal backend. That happens in
+      # test_e2e, via .devtools/.
+      - name: Install Nuxt dependencies
+        working-directory: nuxt
+        run: npm install
+
+      - name: Create .env
+        run: cp .env.example .env
+
+      # Lint + unit tests were ported from the old auto-running
+      # test-preview.yml, which is now a manual-only preview workflow.
+      - name: Lint code
+        working-directory: nuxt
+        run: npm run lint
+
+      - name: Run unit tests
+        working-directory: nuxt
+        run: npm run test:unit
+
+      # fail_ci_if_error is false (the old workflow had true): tokenless
+      # uploads for public repos are rate-limited and shouldn't fail CI on
+      # a starter kit. The token-less integration itself is unchanged.
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          files: ./nuxt/coverage/clover.xml
+          name: codecov-umbrella
+          fail_ci_if_error: false
+
+  test_e2e:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, pdo_sqlite, intl, gd, xml, zip, opcache
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - name: Assemble, provision, and start the Drupal backend
+        working-directory: drupal
+        run: |
+          .devtools/assemble
+          .devtools/provision
+          .devtools/start
+        env:
+          WEBSERVER_HOST: 127.0.0.1
+          WEBSERVER_PORT: 8888
+
+      - name: Install Nuxt dependencies
+        working-directory: nuxt
+        run: npm install
+
+      - name: Install Cypress binary
+        working-directory: nuxt
+        run: npx cypress install
+
+      - name: Run e2e tests
+        working-directory: nuxt
+        run: npm run test:e2e
+
+      - name: Upload Cypress artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cypress-artifacts
+          path: |
+            nuxt/cypress/screenshots
+            nuxt/cypress/videos
+
+  # The documented consumer flow (README: `npx giget ... --install`) is
+  # not what the jobs above exercise - they work from the git checkout
+  # and call .devtools/ directly. This job consumes the same artifact a
+  # giget user gets: a tarball of this exact commit, no .git, no
+  # preinstalled dependencies - and lets the root postinstall stand the
+  # whole site up.
+  test_giget:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, pdo_sqlite, intl, gd, xml, zip, opcache
+
+      # giget needs a modern Node, so it runs on the runner's default;
+      # the site itself gets the repo's pinned Node below, same as a
+      # consumer following the README's mise/nvm instructions.
+      - name: Fetch this commit the way giget consumers do
+        env:
+          # The branch tip can move between trigger and job start; the
+          # SHA cannot. Fork PRs need the head repo, where that SHA
+          # actually lives.
+          REPO: ${{ github.event.pull_request.head.repo.full_name || github.repository }}
+          SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          GIGET_AUTH: ${{ github.token }}
+        # Pinned: this step runs with GIGET_AUTH, so an unpinned npx giget
+        # would hand a future registry release the workflow token.
+        run: npx giget@3.3.1 "gh:${REPO}#${SHA}" site
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: site/.nvmrc
+
+      # `env -u CI`: postinstall deliberately steps aside on CI machines
+      # - this job's whole point is to behave like a consumer machine.
+      - name: Root npm install (giget's --install step)
+        working-directory: site
+        run: env -u CI npm install
+
+      - name: Backend is up and provisioned
+        working-directory: site
+        run: |
+          . ./.env
+          curl -sf "${BASE_URL}/jsonapi" | grep -q '"jsonapi"'
+
+      - name: Frontend builds against the live backend
+        working-directory: site/nuxt
+        run: npm run build
+
+  # What the root install promises on machines without a working PHP: a
+  # giget consumer's `npm install` must never fail, `npm run setup` must
+  # fail loudly, and a too-old PHP must be rejected by the preflight.
+  test_install_guardrails:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - name: Hide the runner's preinstalled PHP
+        run: while command -v php >/dev/null 2>&1; do sudo mv "$(command -v php)" "$(command -v php).hidden"; done
+
+      - name: npm install without PHP succeeds with guidance
+        run: |
+          env -u CI npm install > /tmp/install.log 2>&1
+          grep -q 'The backend needs PHP' /tmp/install.log
+
+      - name: npm run setup without PHP fails with guidance
+        run: |
+          if npm run setup > /tmp/setup.log 2>&1; then echo "setup should have failed"; exit 1; fi
+          grep -q 'Missing required tools' /tmp/setup.log
+
+      - name: Old PHP is rejected by the version preflight
+        run: |
+          SHIM=$(mktemp -d)
+          printf '#!/bin/sh\necho 8.2.29\n' > "$SHIM/php"
+          printf '#!/bin/sh\nexit 0\n' > "$SHIM/composer"
+          chmod +x "$SHIM/php" "$SHIM/composer"
+          if PATH="$SHIM:$PATH" npm run setup > /tmp/old-php.log 2>&1; then echo "setup should have failed"; exit 1; fi
+          grep -q 'too old' /tmp/old-php.log

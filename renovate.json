@@ -1,8 +1,23 @@
 {
-  "extends": [
-    "@nuxtjs"
-  ],
-  "ignoreDeps": [
-    "@nuxtjs/storybook"
+  "extends": ["@nuxtjs"],
+  "ignoreDeps": ["@nuxtjs/storybook"],
+  "packageRules": [
+    {
+      "description": "Lint/dev tooling patch+minor bumps: low risk, nothing shipped to production - safe to auto-merge once CI passes.",
+      "matchDepTypes": ["devDependencies"],
+      "matchUpdateTypes": ["patch", "minor"],
+      "automerge": true,
+      "platformAutomerge": true
+    },
+    {
+      "description": "Drupal/PHP ecosystem: test coverage here is boot+JSON:API-responds only, nothing verifying deeper Drupal behavior - always manual review, regardless of update type.",
+      "matchManagers": ["composer"],
+      "automerge": false
+    },
+    {
+      "description": "Major version bumps anywhere: always manual, no coverage level justifies skipping review on a breaking change.",
+      "matchUpdateTypes": ["major"],
+      "automerge": false
+    }
   ]
 }
