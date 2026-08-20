@@ -1,0 +1,81 @@
+From 225f6a9394ad98f80be66cf71713011fbc647c48 Mon Sep 17 00:00:00 2001
+From: Stuart Clark <stu@rtclark.net>
+Date: Fri, 14 Aug 2026 10:08:48 +0000
+Subject: [PATCH] fix: ViewsPathTranslatorSubscriber crashes on views with no
+ JSON:API route
+
+Two bugs in the same method, both only reachable when jsonapi_views is
+enabled and the resolved path is a Views route with no entity - e.g.
+the default "Frontpage" view on an otherwise-empty Drupal 11 site,
+which is every fresh install before content exists.
+
+1. Url::fromRoute() takes a route name (string), not a Route object.
+   This one was passing $match_info[ROUTE_OBJECT] where the sibling
+   RouterPathTranslatorSubscriber correctly uses ROUTE_NAME a few
+   lines equivalent in its own file. Silently tolerated on older
+   Symfony/Drupal, now a hard TypeError under Drupal 11's stricter
+   core type-checking.
+
+2. jsonapi_views only registers a route for a display once JSON:API
+   export is explicitly enabled on it - most views, including the
+   default Frontpage view, don't have this. The code assumed the
+   route always exists once the module is enabled; it doesn't.
+   RouteNotFoundException now means "no JSON:API export configured
+   for this view," not an error.
+
+Found via druxt/quickstart's new .devtools/ CI (druxt/workspace),
+which is the first place fresh site:install + jsonapi_views + an
+empty front page has actually been exercised end-to-end.
+---
+ .../ViewsPathTranslatorSubscriber.php         | 21 +++++++++++++------
+ 1 file changed, 15 insertions(+), 6 deletions(-)
+
+diff --git a/src/EventSubscriber/ViewsPathTranslatorSubscriber.php b/src/EventSubscriber/ViewsPathTranslatorSubscriber.php
+index fe86f7b..975479f 100644
+--- a/src/EventSubscriber/ViewsPathTranslatorSubscriber.php
++++ b/src/EventSubscriber/ViewsPathTranslatorSubscriber.php
+@@ -12,6 +12,7 @@ use Drupal\decoupled_router\PathTranslatorEvent;
+ use Drupal\views\Views;
+ use Symfony\Component\Routing\Exception\MethodNotAllowedException;
+ use Symfony\Component\Routing\Exception\ResourceNotFoundException;
++use Symfony\Component\Routing\Exception\RouteNotFoundException;
+ 
+ /**
+  * Event subscriber that processes a path translation with the router info.
+@@ -62,8 +63,8 @@ class ViewsPathTranslatorSubscriber extends RouterPathTranslatorSubscriber {
+     $executable = Views::executableFactory()->get($view);
+     $executable->setDisplay($match_info['display_id']);
+ 
+-    $route = $match_info[RouteObjectInterface::ROUTE_OBJECT];
+-    $resolved_url = Url::fromRoute($route, [], ['absolute' => TRUE])->toString(TRUE);
++    $route_name = $match_info[RouteObjectInterface::ROUTE_NAME];
++    $resolved_url = Url::fromRoute($route_name, [], ['absolute' => TRUE])->toString(TRUE);
+     $response->addCacheableDependency($resolved_url);
+ 
+     $is_home_path = $this->resolvedPathIsHomePath($resolved_url->getGeneratedUrl());
+@@ -127,10 +128,18 @@ class ViewsPathTranslatorSubscriber extends RouterPathTranslatorSubscriber {
+         $match_info['display_id'],
+       ];
+       $jsonapi_views_route = implode('.', $parts);
+-      $resolved_jsonapi_views_url = Url::fromRoute($jsonapi_views_route, [], ['absolute' => TRUE])->toString(TRUE);
+-      $response->addCacheableDependency($resolved_jsonapi_views_url);
+-
+-      $output['jsonapi_views'] = $resolved_jsonapi_views_url->getGeneratedUrl();
++      // jsonapi_views only exposes a route for a display once JSON:API
++      // export has been enabled on it - most views (e.g. the default
++      // "Frontpage" view) don't have this, so a missing route is expected,
++      // not an error.
++      try {
++        $resolved_jsonapi_views_url = Url::fromRoute($jsonapi_views_route, [], ['absolute' => TRUE])->toString(TRUE);
++        $response->addCacheableDependency($resolved_jsonapi_views_url);
++
++        $output['jsonapi_views'] = $resolved_jsonapi_views_url->getGeneratedUrl();
++      }
++      catch (RouteNotFoundException $e) {
++      }
+     }
+ 
+     $response->addCacheableDependency($view);
+-- 
+2.55.0
+

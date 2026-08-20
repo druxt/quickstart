@@ -1,6 +1,6 @@
 {
     "name": "drupal/recommended-project",
-    "description": "Project template for Drupal 9 projects with a relocated document root",
+    "description": "Project template for Drupal 11 projects with a relocated document root",
     "type": "project",
     "license": "GPL-2.0-or-later",
     "homepage": "https://www.drupal.org/project/drupal",
@@ -15,18 +15,18 @@
         }
     ],
     "require": {
-        "composer/installers": "2.2.0",
-        "cweagans/composer-patches": "^1.7.2",
-        "drupal/core-composer-scaffold": "9.4.8",
-        "drupal/core-project-message": "9.4.8",
-        "drupal/core-recommended": "9.4.8",
-        "drupal/druxt": "1.1.1",
-        "drupal/simple_oauth": "^5.2.2",
-        "drush/drush": "11.3.2",
-        "vlucas/phpdotenv": "^5.5.0"
+        "composer/installers": "^2.2",
+        "cweagans/composer-patches": "^2.0@beta",
+        "drupal/core-composer-scaffold": "~11",
+        "drupal/core-project-message": "~11",
+        "drupal/core-recommended": "~11",
+        "drupal/druxt": "^1.2",
+        "drupal/simple_oauth": "^6",
+        "drush/drush": "^13",
+        "vlucas/phpdotenv": "^5.5"
     },
     "require-dev": {
-        "drupal/core-dev": "9.4.8"
+        "drupal/core-dev": "~11"
     },
     "conflict": {
         "drupal/drupal": "*"
@@ -45,7 +45,11 @@
             "drupal/core-composer-scaffold": true,
             "drupal/core-project-message": true,
             "dealerdirect/phpcodesniffer-composer-installer": true,
-            "cweagans/composer-patches": true
+            "cweagans/composer-patches": true,
+            "php-http/discovery": true,
+            "symfony/runtime": true,
+            "phpstan/extension-installer": true,
+            "twig-cs-fixer/twig-cs-fixer": true
         }
     },
     "extra": {
@@ -83,6 +87,11 @@
                 "  * Remove the plugin that prints this message:",
                 "      composer remove drupal/core-project-message"
             ]
+        },
+        "patches": {
+            "drupal/druxt": {
+                "Fix ViewsPathTranslatorSubscriber crash on views with no JSON:API route - https://gitlab.local/drupal/druxt/-/merge_requests/5": "patches/druxt-views-path-translator-route-name.patch"
+            }
         }
     }
 }
