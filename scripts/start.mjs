@@ -5,10 +5,18 @@
 
 import fs from 'node:fs'
 import path from 'node:path'
-import { NUXT_DIR, ensureBackend, exitWithError, foregroundNpm, runNpm } from './lib.mjs'
+import {
+  NUXT_DIR,
+  ensureBackend,
+  ensureOauthClientId,
+  exitWithError,
+  foregroundNpm,
+  runNpm,
+} from './lib.mjs'
 
 async function main() {
   await ensureBackend()
+  ensureOauthClientId()
 
   // `nuxt start` needs the server bundle from a production build; a dev
   // server's .nuxt/ (no dist/server) must not fool this check.
