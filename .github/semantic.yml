@@ -1,0 +1,8 @@
+# Semantic Pull Requests: validate the pull request TITLE, not the
+# commits inside it.
+#
+# The app's default accepts a PR when *either* the title or the commits
+# are conventional. These repos squash-merge, so the title becomes the
+# merge commit's subject - a well-committed PR with a prose title passed
+# the check, then broke `lint:commit` on develop for every later push.
+titleOnly: true
