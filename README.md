@@ -145,8 +145,8 @@ The browser builds the OAuth callback from its own address. An IDE
 forwarding container port 3000 uses the next free host port when 3000 is
 taken (3001, 3002, ...), and Drupal rejects an unregistered callback as
 `invalid_client`. Provisioning registers `localhost:3000-3009/callback`
-to absorb this - if you land outside that range, free up host ports or
-re-provision with a matching `OAUTH_CALLBACK`.
+to absorb this - if forwarding assigns a port outside that range, free
+up host ports or re-provision with a matching `OAUTH_CALLBACK`.
 
 ### Windows
 
