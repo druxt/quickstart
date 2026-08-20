@@ -13,10 +13,18 @@ set -euo pipefail
 # and hand the script different working directories.
 if [ -f /var/www/html/composer.json ]; then
   PROJECT_ROOT=/var/www/html            # DDEV
+  # DDEV writes settings.ddev.php with the database credentials, so
+  # site:install finds them by itself.
+  DB_URL_ARG=""
 elif [ -f /app/composer.json ]; then
   PROJECT_ROOT=/app                     # Lando
+  # Lando writes no Drupal settings at all. Without credentials,
+  # site:install drops into its interactive database prompt and dies on
+  # a null driver. These are the drupal11 recipe's documented defaults.
+  DB_URL_ARG="--db-url=mysql://drupal11:drupal11@database/drupal11"
 else
   PROJECT_ROOT="$(pwd)"
+  DB_URL_ARG=""
 fi
 DRUPAL_ROOT="$PROJECT_ROOT/web"
 
@@ -25,7 +33,7 @@ composer install --working-dir="$PROJECT_ROOT"
 
 # Install a standard Drupal installation. Drush is given the docroot
 # explicitly: DDEV's wrapper infers it, Lando's does not.
-drush -r "$DRUPAL_ROOT" -y site:install --site-name='quickstart-druxt-site' standard
+drush -r "$DRUPAL_ROOT" -y site:install --site-name='quickstart-druxt-site' ${DB_URL_ARG:+"$DB_URL_ARG"} standard
 
 # Drupal 11's standard profile no longer creates content types itself -
 # Article and Page ship as separate core recipes. Without them there are
