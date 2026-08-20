@@ -39,7 +39,10 @@ Requires [Node 16](.nvmrc) and one of:
 
 - PHP 8.4 (with the pdo_sqlite extension) + Composer on your machine
   (Drush comes with the backend - no global install needed), or
-- [DDEV](https://ddev.readthedocs.io) (Docker)
+- [DDEV](https://ddev.readthedocs.io) or [Lando](https://lando.dev) (Docker)
+
+On Windows, use the [dev container](#development-container-vs-code-codespaces-devpod),
+WSL2, or a container backend - see [Windows](#windows).
 
 [nvm](https://github.com/nvm-sh/nvm) or [mise](https://mise.jdx.dev/) users:
 `nvm use` / `mise install` provides the pinned versions.
@@ -106,6 +109,50 @@ Using DDEV? Keep `BASE_URL` as the `*.ddev.site` URL in `.env`
 3. `npm run dev` as above. The DDEV backend is never auto-started or
    auto-stopped from the npm scripts.
 
+### Local development with [Lando](https://lando.dev)
+
+Set `BASE_URL` in `.env` to your Lando URL
+(`https://druxt-quickstart.lndo.site` for the bundled `drupal/.lando.yml`).
+Then:
+
+1. Frontend (from repository root):
+
+   ```bash
+   npm run setup
+   ```
+
+   Any non-loopback `BASE_URL` is treated as a backend this repo does not
+   manage, so this installs the frontend only.
+
+2. Backend (from `drupal/`):
+
+   ```bash
+   lando start
+   lando drupal-install
+   lando druxt-add-consumer
+   ```
+
+   `druxt-add-consumer` prints `OAUTH_CLIENT_ID=...` - copy it into
+   `.env`. Both commands run the same install steps as their DDEV
+   counterparts.
+
+3. `npm run dev` as above. `npm run drush -- <command>` is proxied
+   through `lando drush`.
+
+### Windows
+
+The local PHP backend does not run on Windows directly: it manages a PHP
+built-in server with `nohup`, `lsof`, `ps` and `kill`, and generates
+OAuth keys through OpenSSL. `npm run setup` says so rather than failing
+part-way through.
+
+Any of these work instead, with no changes to the repository:
+
+- the [dev container](#development-container-vs-code-codespaces-devpod),
+- WSL2, running the same commands inside your Linux distribution,
+- [DDEV](#local-development-with-ddev) or [Lando](#local-development-with-lando),
+  setting `BASE_URL` to the container URL.
+
 ### Development Container (VS Code, Codespaces, DevPod)
 
 `.devcontainer/devcontainer.json` gives you a ready environment: Node
@@ -158,6 +205,15 @@ DDEV is used to manage the Drupal instance, and provides a CLI that can be used 
 These commands should be run from within the `/drupal` folder.
 
 Refer to the documentation for more details: https://ddev.readthedocs.io
+
+### Lando
+
+> Lando is a free, open-source development tool that allows developers to
+> easily specify and construct the exact environment they need to build
+> their applications.
+
+- [lando.dev](https://lando.dev)
+- Config: [drupal/.lando.yml](drupal/.lando.yml)
 
 ### @nuxtjs/auth-next
 

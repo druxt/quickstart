@@ -1,3 +1,4 @@
+appserver
 behaviour
 bmewburn
 bootstrapvue
@@ -17,6 +18,8 @@ hverlin
 intelephense
 interruptible
 knip
+lando
+Landofile
 libasound
 libfreetype
 libgbm
@@ -29,6 +32,7 @@ libsqlite
 libxss
 libxtst
 libzip
+lndo
 makedirs
 mbstring
 namelist
@@ -37,6 +41,7 @@ nuxt
 nuxtjs
 nvmrc
 opcache
+openssl
 openvscode
 phpsab
 phpstan
