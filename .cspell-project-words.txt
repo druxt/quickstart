@@ -1,4 +1,3 @@
-Stanislav
 behaviour
 bmewburn
 bootstrapvue
@@ -44,6 +43,8 @@ phpstan
 repository
 setuptools
 shivammathur
+Stanislav
+starterkit
 startswith
 tokenless
 trixie

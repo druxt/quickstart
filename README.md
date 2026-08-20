@@ -25,12 +25,13 @@ npm run dev
 local Drupal 11 + SQLite backend. Needs PHP 8.4 and Composer on `PATH`.
 Without them, it installs the frontend only and prints the next steps.
 
-## Theme branches
+## Themed starts
 
-Start quicker with a pre-installed UI Framework.
+The `theme/bootstrap-vue` and `theme/tailwindcss` branches are frozen on a
+2022 version of this starterkit and do not include the Drupal 11 work.
 
-- [BootstrapVue](https://github.com/druxt/quickstart/tree/theme/bootstrap-vue)
-- [TailwindCSS](https://github.com/druxt/quickstart/tree/theme/tailwindcss)
+They are being replaced with reusable theme packages - see
+[#143](https://github.com/druxt/quickstart/issues/143) to follow progress.
 
 ## Getting started
 
