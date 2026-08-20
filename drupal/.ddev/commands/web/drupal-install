@@ -32,11 +32,12 @@ drush role:perm:add anonymous "access druxt resources"
 drush -y pm:enable simple_oauth
 
 # Configure and generate keys for Simple OAuth. Absolute path on purpose:
-# this command's cwd is /var/www/html (the mounted project root), so a
-# relative ../keys would land OUTSIDE the mount - ephemeral, and not the
-# drupal/keys/ location the config values below resolve to (they are
-# Drupal-side paths, resolved relative to the app root web/).
-KEYS_DIR="/var/www/html/keys"
+# this command's cwd is the mounted project root, so a relative ../keys
+# would land OUTSIDE the mount - ephemeral, and not the drupal/keys/
+# location the config values below resolve to (they are Drupal-side
+# paths, resolved relative to the app root web/). Derived rather than
+# hardcoded because DDEV mounts at /var/www/html and Lando at /app.
+KEYS_DIR="$(pwd)/keys"
 mkdir -p "$KEYS_DIR"
 drush -y config:set simple_oauth.settings public_key ../keys/public.key
 drush -y config:set simple_oauth.settings private_key ../keys/private.key
