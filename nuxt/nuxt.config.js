@@ -1,8 +1,28 @@
 require('dotenv').config({ path: '../.env' })
 const baseUrl = process.env.BASE_URL || ''
 
+
+// Bound to 0.0.0.0, Nuxt reports the container-internal interface IP as
+// its listen URL - unreachable from the host. Rewrite the reported URL
+// only: the bind stays 0.0.0.0 so container port forwarding keeps working.
+const localhostListenURL = function () {
+  this.nuxt.hook('listen', (server, listener) => {
+    listener.host = 'localhost'
+    listener.url = `http://localhost:${listener.port}/`
+  })
+}
+
 export default {
   target: process.env.NUXT_TARGET,
+
+  // Nuxt 2 defaults to binding 'localhost' (loopback only), which is not
+  // reachable through devcontainer/DevPod port forwarding - the forwarded
+  // port maps to the container's network interface, not its loopback.
+  // https://v2.nuxt.com/docs/configuration-glossary/configuration-server/
+  server: {
+    host: process.env.HOST || '0.0.0.0',
+    port: process.env.PORT || 3000
+  },
 
   // Global page headers: https://go.nuxtjs.dev/config-head
   head: {
@@ -35,13 +55,23 @@ export default {
   // Modules for dev and build (recommended): https://go.nuxtjs.dev/config-modules
   buildModules: [
     // https://go.nuxtjs.dev/eslint
-    '@nuxtjs/eslint-module',
-    ['druxt-auth', { clientId: process.env.OAUTH_CLIENT_ID }],
-    'druxt-site'
+    '@nuxtjs/eslint-module'
   ],
 
   // Modules: https://go.nuxtjs.dev/config-modules
-  modules: [],
+  //
+  // Druxt belongs in `modules`, NOT `buildModules`: Nuxt 2 does not load
+  // buildModules on `nuxt start`, so anything runtime the module
+  // registers - the @nuxtjs/proxy serverMiddleware behind
+  // `druxt.proxy.api`, the axios defaults - silently vanishes from
+  // production. The visible symptom: client-side /jsonapi requests get
+  // the app's own HTML shell back, and hydration wipes the SSR-rendered
+  // menus. Matches the druxt.js monorepo's own example placement.
+  modules: [
+    ['druxt-auth', { clientId: process.env.OAUTH_CLIENT_ID }],
+    'druxt-site',
+    localhostListenURL
+  ],
 
   // DruxtJS: https://druxtjs.org
   druxt: {
