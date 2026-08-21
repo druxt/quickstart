@@ -89,8 +89,13 @@ export function lintPrivateRefs(root = ROOT) {
   return problems
 }
 
-if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
-  const problems = lintPrivateRefs()
+/**
+ * What the command does, separated from the entry guard so a test can
+ * measure it in-process. Run through a child process it works, but node
+ * counts none of it as covered.
+ */
+export function main(root = ROOT) {
+  const problems = lintPrivateRefs(root)
   if (problems.length > 0) {
     exitWithError(
       [
@@ -104,4 +109,8 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
     )
   }
   console.log('No private hosts referenced by tracked files.')
+}
+
+if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
+  main()
 }
