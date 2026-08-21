@@ -90,7 +90,7 @@
         },
         "patches": {
             "drupal/druxt": {
-                "Fix ViewsPathTranslatorSubscriber crash on views with no JSON:API route - https://gitlab.local/drupal/druxt/-/merge_requests/5": "patches/druxt-views-path-translator-route-name.patch"
+                "Fix ViewsPathTranslatorSubscriber crash on views with no JSON:API route": "patches/druxt-views-path-translator-route-name.patch"
             }
         }
     }

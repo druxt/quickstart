@@ -23,8 +23,8 @@ which is every fresh install before content exists.
    RouteNotFoundException now means "no JSON:API export configured
    for this view," not an error.
 
-Found via druxt/quickstart's new .devtools/ CI (druxt/workspace),
-which is the first place fresh site:install + jsonapi_views + an
+Found via druxt/quickstart's new .devtools/ CI, which is
+the first place a fresh site:install with jsonapi_views and an
 empty front page has actually been exercised end-to-end.
 ---
  .../ViewsPathTranslatorSubscriber.php         | 21 +++++++++++++------
