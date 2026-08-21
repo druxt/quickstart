@@ -70,7 +70,8 @@ WSL2, or a container backend - see [Windows](#windows).
    ```
 
    - Drupal backend: http://127.0.0.1:8888
-   - Nuxt frontend: http://localhost:3000
+   - Nuxt frontend: http://localhost:3000 (or the next free port up to
+     3009, which it prints)
    - One-time Drupal login: `npm run login`
 
 `npm run dev` and `npm run start` automatically start the local backend
@@ -139,6 +140,19 @@ Then:
 3. `npm run dev` as above. `npm run drush -- <command>` is proxied
    through `lando drush`.
 
+### Troubleshooting
+
+#### Port 3000 is already in use
+
+`npm run dev` takes the next free port between 3000 and 3009 and says
+which one it picked. Provisioning registers an OAuth callback for every
+port in that range, so login keeps working on whichever one it uses.
+
+Naming a port yourself turns that off: `PORT=3005 npm run dev` uses
+3005 or fails, because a port you asked for is a decision rather than a
+default. If the whole range is busy, `npm run dev` says so instead of
+letting Nuxt fall back to a random port and break login.
+
 #### Login fails with invalid_client in a dev container
 
 The browser builds the OAuth callback from its own address. An IDE
@@ -187,7 +201,7 @@ npm run dev
 ```
 
 - Drupal backend: http://127.0.0.1:8888
-- Nuxt frontend: http://localhost:3000
+- Nuxt frontend: http://localhost:3000 (or the next free port up to 3009)
 
 ## How to use it
 
@@ -199,7 +213,7 @@ In a Development Container (VS Code, Codespaces, DevPod), forwarded ports are ac
 
 | Port   | Service                                                                               |
 | ------ | ------------------------------------------------------------------------------------- |
-| `3000` | Nuxt.js                                                                               |
+| `3000` | Nuxt.js (3000-3009: `npm run dev` takes the first free one)                           |
 | `3003` | Storybook                                                                             |
 | `8888` | Drupal (local `.devtools` backend - DDEV serves at its own `*.ddev.site` URL instead) |
 

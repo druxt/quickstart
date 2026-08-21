@@ -226,6 +226,32 @@ export async function waitForPort(host, port, timeoutSeconds = 30) {
 }
 
 /**
+ * The ports the frontend may serve on. Provisioning registers an OAuth
+ * callback for every one of them (drupal/.devtools/provision and
+ * .ddev/commands/web/druxt-add-consumer), so moving between them never
+ * breaks login. Anything outside the list does, because the browser
+ * builds redirect_uri from its own origin and Drupal rejects an
+ * unregistered one as, confusingly, invalid_client.
+ */
+export const FRONTEND_PORTS = Array.from({ length: 10 }, (_, index) => 3000 + index)
+
+/** True when a port has an OAuth callback registered for it. */
+export function portIsRegistered(port) {
+  return FRONTEND_PORTS.includes(port)
+}
+
+/**
+ * The first of `ports` nothing is listening on, or null when they are
+ * all taken. Checked in order, so a free 3000 always wins.
+ */
+export async function firstFreePort(host, ports = FRONTEND_PORTS) {
+  for (const port of ports) {
+    if (!(await isPortOpen(host, port, 500))) return port
+  }
+  return null
+}
+
+/**
  * Run a command to completion, inheriting stdio. Throws on failure.
  */
 export function run(command, args, { cwd, allowFailure = false, env } = {}) {

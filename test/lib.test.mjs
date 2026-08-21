@@ -8,6 +8,7 @@
 
 import assert from 'node:assert/strict'
 import fs from 'node:fs'
+import net from 'node:net'
 import os from 'node:os'
 import path from 'node:path'
 import { after, before, describe, it } from 'node:test'
@@ -15,7 +16,11 @@ import { after, before, describe, it } from 'node:test'
 import {
   acquireSetupLock,
   backendInfo,
+  DRUPAL_DIR,
+  firstFreePort,
+  FRONTEND_PORTS,
   isPortOpen,
+  portIsRegistered,
   readEnv,
   releaseSetupLock,
   setupLockContentionMessage,
@@ -110,6 +115,76 @@ describe('the setup lock', () => {
     releaseSetupLock()
     assert.match(message, /another setup is already running/)
     assert.match(message, /\.setup\.lock/)
+  })
+})
+
+describe('the registered frontend ports', () => {
+  it('cover exactly the ports provisioning registers a callback for', () => {
+    // Drupal is the authority here: a port with no registered callback
+    // fails login with invalid_client, so the two lists have to agree.
+    const provision = fs.readFileSync(path.join(DRUPAL_DIR, '.devtools', 'provision'), 'utf8')
+    const [, first, last] = provision.match(/range\((\d+),\s*(\d+)\)/)
+    const expected = []
+    for (let port = Number(first); port <= Number(last); port += 1) {
+      expected.push(port)
+    }
+    assert.deepEqual(FRONTEND_PORTS, expected)
+  })
+
+  it('are the only ports portIsRegistered accepts', () => {
+    for (const port of FRONTEND_PORTS) {
+      assert.equal(portIsRegistered(port), true, String(port))
+    }
+    for (const port of [0, 80, 2999, 3010, 8080]) {
+      assert.equal(portIsRegistered(port), false, String(port))
+    }
+  })
+
+  it('does not accept a port that is not a number', () => {
+    for (const port of ['3000', null, undefined, NaN]) {
+      assert.equal(portIsRegistered(port), false, String(port))
+    }
+  })
+})
+
+describe('firstFreePort', () => {
+  /** Listen on an ephemeral port, and report which one. */
+  async function listen() {
+    const server = net.createServer()
+    await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve))
+    return { server, port: server.address().port }
+  }
+
+  /** A port nothing is listening on: take one, then give it back. */
+  async function freePort() {
+    const { server, port } = await listen()
+    await new Promise((resolve) => server.close(resolve))
+    return port
+  }
+
+  it('skips a port in use and returns the next free one', async () => {
+    const busy = await listen()
+    const free = await freePort()
+    try {
+      assert.equal(await firstFreePort('127.0.0.1', [busy.port, free]), free)
+    } finally {
+      busy.server.close()
+    }
+  })
+
+  it('takes the first free port, not just any free one', async () => {
+    const first = await freePort()
+    const second = await freePort()
+    assert.equal(await firstFreePort('127.0.0.1', [first, second]), first)
+  })
+
+  it('is null when every port is taken', async () => {
+    const busy = await listen()
+    try {
+      assert.equal(await firstFreePort('127.0.0.1', [busy.port]), null)
+    } finally {
+      busy.server.close()
+    }
   })
 })
 
