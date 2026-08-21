@@ -151,4 +151,22 @@ describe('postinstall', () => {
     assert.equal(code, 0, output)
     assert.match(output, /backend needs PHP|Next steps/)
   })
+
+  it('never fails npm install when the only PHP is below the minimum', async () => {
+    writeEnv([])
+    // php and composer both answer, so the missing-tool guard does not
+    // apply. The version has to stop the setup here, because the
+    // preflight's process.exit would skip postinstall's catch and take
+    // `npm install` down with it.
+    const shim = fs.mkdtempSync(path.join(os.tmpdir(), 'druxt-old-php-'))
+    fs.writeFileSync(path.join(shim, 'php'), '#!/bin/sh\necho 8.2.29\n', { mode: 0o755 })
+    fs.writeFileSync(path.join(shim, 'composer'), '#!/bin/sh\nexit 0\n', { mode: 0o755 })
+    const { code, output } = await run('postinstall.mjs', {
+      env: { CI: '', PATH: [shim, path.dirname(process.execPath)].join(path.delimiter) },
+    })
+    fs.rmSync(shim, { recursive: true, force: true })
+    assert.equal(code, 0, output)
+    assert.match(output, /backend needs PHP 8\.3\+/)
+    assert.match(output, /8\.2\.29/)
+  })
 })

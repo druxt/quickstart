@@ -25,9 +25,6 @@
         "drush/drush": "^13",
         "vlucas/phpdotenv": "^5.5"
     },
-    "require-dev": {
-        "drupal/core-dev": "~11"
-    },
     "conflict": {
         "drupal/drupal": "*"
     },
@@ -40,6 +37,9 @@
     },
     "config": {
         "sort-packages": true,
+        "platform": {
+            "php": "8.3"
+        },
         "allow-plugins": {
             "composer/installers": true,
             "drupal/core-composer-scaffold": true,

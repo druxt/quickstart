@@ -431,13 +431,16 @@ preview:
       echo "=================================================="
     - . ./code-server.env && sleep "$PREVIEW_LIVE_SECONDS"
 
-# The documented consumer flow (`npx giget gh:druxt/... my-site
+# The documented consumer flow (`npx giget@1 gh:druxt/... my-site
 # --install`) consumes a tarball: no .git, no preinstalled dependencies,
 # and the root npm install stands everything up. git archive produces
 # that same artifact from this exact commit - giget itself can only
 # fetch refs already pushed to GitHub.
-test_giget:
+test_consumer_install:
   extends: .php-node-setup
+  # The documented minimum, so a pass means the lock and the provisioning
+  # actually work there - not just on a newer PHP.
+  image: php:8.3
   stage: test
   needs: []
   script:
@@ -449,7 +452,7 @@ test_giget:
     - cd /tmp/site/nuxt && npm run build
 
 # What the root install promises on machines without a working PHP: a
-# giget consumer's `npm install` must never fail, `npm run setup` must
+# consumer's `npm install` must never fail, `npm run setup` must
 # fail loudly, and a too-old PHP must be rejected by the preflight.
 test_install_guardrails:
   stage: test
@@ -470,3 +473,12 @@ test_install_guardrails:
       chmod +x "$SHIM/php" "$SHIM/composer"
       if PATH="$SHIM:$PATH" npm run setup > /tmp/old-php.log 2>&1; then echo "setup should have failed"; exit 1; fi
       grep -q 'too old' /tmp/old-php.log
+    # Too-old PHP through npm install: the preflight exits the process, so
+    # without postinstall screening first this would fail the install.
+    - |
+      SHIM=$(mktemp -d)
+      printf '#!/bin/sh\necho 8.2.29\n' > "$SHIM/php"
+      printf '#!/bin/sh\nexit 0\n' > "$SHIM/composer"
+      chmod +x "$SHIM/php" "$SHIM/composer"
+      PATH="$SHIM:$PATH" env -u CI npm install > /tmp/old-php-install.log 2>&1
+      grep -q 'The backend needs PHP' /tmp/old-php-install.log

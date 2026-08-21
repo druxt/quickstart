@@ -3,7 +3,7 @@
  *
  * Runs on plain Node (>= 16, see .nvmrc / mise.toml) with zero npm
  * dependencies: the root package.json intentionally has none, so
- * `npx giget gh:druxt/quickstart my-site --install` stays fast and
+ * `npx giget@1 gh:druxt/quickstart my-site --install` stays fast and
  * nothing can hoist over or conflict with nuxt/'s dependency tree.
  */
 
@@ -254,6 +254,31 @@ export function toolAvailable(command, args = ['-v']) {
     shell: needsShell(command),
   })
   return !result.error && result.status === 0
+}
+
+// Drupal 11's hard floor, and the version drupal/composer.json's
+// config.platform resolves against, so the committed lock installs here.
+export const MINIMUM_PHP = [8, 3]
+
+/**
+ * The version of the PHP on PATH, or null when it is absent or
+ * unreadable - callers let composer report those rather than guessing.
+ */
+export function phpVersion() {
+  const result = spawnSync('php', ['-r', 'echo PHP_VERSION;'], { encoding: 'utf8' })
+  const version = (result.stdout || '').trim()
+  return /^\d+\.\d+/.test(version) ? version : null
+}
+
+/**
+ * True only for a version that can never run Drupal 11. An unreadable
+ * version is not rejected here.
+ */
+export function phpBelowMinimum(version) {
+  const match = String(version ?? '').match(/^(\d+)\.(\d+)/)
+  if (!match) return false
+  const [major, minor] = [Number(match[1]), Number(match[2])]
+  return major < MINIMUM_PHP[0] || (major === MINIMUM_PHP[0] && minor < MINIMUM_PHP[1])
 }
 
 /**

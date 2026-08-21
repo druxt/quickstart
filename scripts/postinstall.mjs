@@ -1,6 +1,6 @@
 /**
  * Runs after `npm install` at the repository root - including
- * `npx giget gh:druxt/quickstart my-site --install`, where it is the
+ * `npx giget@1 gh:druxt/quickstart my-site --install`, where it is the
  * first thing a new user sees.
  *
  * `--install` should install, so on a fresh checkout with PHP +
@@ -14,16 +14,20 @@
  *   provision from a lifecycle hook just in case.
  * - Already set up (BASE_URL + OAUTH_CLIENT_ID present in .env):
  *   subsequent installs must not re-provision the site.
- * - PHP or Composer missing: the user gets pointed at `npm run setup`
- *   and the README instead of a failed install.
+ * - PHP or Composer missing, or PHP below the minimum: the user gets
+ *   pointed at `npm run setup` and the README instead of a failed
+ *   install.
  */
 
 import {
   IS_WINDOWS,
+  MINIMUM_PHP,
   SPLASH,
   WINDOWS_HELP,
   backendInfo,
   miseAvailable,
+  phpBelowMinimum,
+  phpVersion,
   printCommands,
   readEnv,
   toolAvailable,
@@ -81,7 +85,7 @@ async function main() {
   }
 
   if (!externalBackend && (!toolAvailable('php') || !toolAvailable('composer'))) {
-    console.log('  Node side ready. The backend needs PHP 8.4 + Composer (or DDEV).')
+    console.log('  Node side ready. The backend needs PHP 8.3+ and Composer (or DDEV).')
     console.log('')
     printNextSteps(
       miseAvailable()
@@ -89,6 +93,25 @@ async function main() {
         : '    Install them, then:'
     )
     return
+  }
+
+  // A PHP too old to run Drupal 11 is a missing prerequisite, not a
+  // failure: the setup preflight would exit and take `npm install` with
+  // it, because process.exit skips the catch below.
+  if (!externalBackend) {
+    const version = phpVersion()
+    if (phpBelowMinimum(version)) {
+      console.log(
+        `  Node side ready. The backend needs PHP ${MINIMUM_PHP.join('.')}+, found ${version}.`
+      )
+      console.log('')
+      printNextSteps(
+        miseAvailable()
+          ? '    Upgrade PHP (mise users: `mise install`), then:'
+          : '    Upgrade PHP, then:'
+      )
+      return
+    }
   }
 
   console.log('  Fresh install detected - running full setup (frontend + Composer')
