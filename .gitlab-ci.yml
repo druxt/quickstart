@@ -83,6 +83,16 @@ lint:renovate:
   script:
     - npm run lint:renovate
 
+# This repository is public and is what people copy to start a site, so a
+# URL only the author can reach is a defect in the published artefact,
+# not a stray comment.
+lint:private:
+  extends: .node-lint
+  stage: lint
+  interruptible: true
+  script:
+    - npm run lint:private
+
 # Only checks the most recent commit - good enough to catch the common
 # case (a single non-conforming commit message) without the complexity of
 # resolving a full MR commit range across both push and merge_request

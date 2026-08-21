@@ -94,6 +94,12 @@ minor is for.
   random one, which silently breaks the OAuth callback.
 - The dev container no longer leaves Xdebug active, which made every
   `php` and `composer` call wait for a debugger.
+- The druxt patch is described without a link to a private merge
+  request. composer-patches prints descriptions during
+  `composer install`, so every install showed a patch justified by a URL
+  the reader could not open. `npm run lint:private` now fails the build
+  on any tracked file referencing a host that resolves only on a private
+  network.
 
 ### Dependencies
 
