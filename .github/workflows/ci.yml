@@ -282,63 +282,60 @@ jobs:
             nuxt/cypress/screenshots
             nuxt/cypress/videos
 
-  # The documented consumer flow (README: `npx giget ... --install`) is
+  # The documented consumer flow (README: `npx giget@1 ... --install`) is
   # not what the jobs above exercise - they work from the git checkout
   # and call .devtools/ directly. This job consumes the same artifact a
   # giget user gets: a tarball of this exact commit, no .git, no
   # preinstalled dependencies - and lets the root postinstall stand the
   # whole site up.
-  test_giget:
+  #
+  # `git archive` produces that tarball from the commit under test, which
+  # giget cannot do - it only fetches refs already pushed to GitHub.
+  test_consumer_install:
     runs-on: ubuntu-latest
     steps:
+      # The documented minimum, so a pass means the lock and the
+      # provisioning actually work there - not just on a newer PHP.
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.4'
+          php-version: '8.3'
           extensions: mbstring, pdo_sqlite, intl, gd, xml, zip, opcache
 
-      # giget needs a modern Node, so it runs on the runner's default;
-      # the site itself gets the repo's pinned Node below, same as a
-      # consumer following the README's mise/nvm instructions.
-      - name: Fetch this commit the way giget consumers do
-        env:
-          # The branch tip can move between trigger and job start; the
-          # SHA cannot. Fork PRs need the head repo, where that SHA
-          # actually lives.
-          REPO: ${{ github.event.pull_request.head.repo.full_name || github.repository }}
-          SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-          GIGET_AUTH: ${{ github.token }}
-        # Pinned: this step runs with GIGET_AUTH, so an unpinned npx giget
-        # would hand a future registry release the workflow token.
-        run: npx giget@3.3.1 "gh:${REPO}#${SHA}" site
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: Setup Node
         uses: actions/setup-node@v7
         with:
-          node-version-file: site/.nvmrc
+          node-version-file: .nvmrc
+
+      - name: Build the tarball a giget consumer gets
+        run: git archive --prefix=site/ HEAD | tar -x -C /tmp
 
       # `env -u CI`: postinstall deliberately steps aside on CI machines
       # - this job's whole point is to behave like a consumer machine.
       - name: Root npm install (giget's --install step)
-        working-directory: site
+        working-directory: /tmp/site
         run: env -u CI npm install
 
       - name: Backend is up and provisioned
-        working-directory: site
+        working-directory: /tmp/site
         run: |
           . ./.env
           curl -sf "${BASE_URL}/jsonapi" | grep -q '"jsonapi"'
 
       - name: OAuth consumer is recognised
-        working-directory: site
+        working-directory: /tmp/site
         run: npm run check:oauth
 
       - name: Frontend builds against the live backend
-        working-directory: site/nuxt
+        working-directory: /tmp/site/nuxt
         run: npm run build
 
   # What the root install promises on machines without a working PHP: a
-  # giget consumer's `npm install` must never fail, `npm run setup` must
+  # consumer's `npm install` must never fail, `npm run setup` must
   # fail loudly, and a too-old PHP must be rejected by the preflight.
   test_install_guardrails:
     runs-on: ubuntu-latest
@@ -373,3 +370,14 @@ jobs:
           chmod +x "$SHIM/php" "$SHIM/composer"
           if PATH="$SHIM:$PATH" npm run setup > /tmp/old-php.log 2>&1; then echo "setup should have failed"; exit 1; fi
           grep -q 'too old' /tmp/old-php.log
+
+      # The preflight exits the process, so without postinstall screening
+      # the version first this is what would fail `npm install` outright.
+      - name: Old PHP still leaves npm install green
+        run: |
+          SHIM=$(mktemp -d)
+          printf '#!/bin/sh\necho 8.2.29\n' > "$SHIM/php"
+          printf '#!/bin/sh\nexit 0\n' > "$SHIM/composer"
+          chmod +x "$SHIM/php" "$SHIM/composer"
+          PATH="$SHIM:$PATH" env -u CI npm install > /tmp/old-php-install.log 2>&1
+          grep -q 'The backend needs PHP' /tmp/old-php-install.log
