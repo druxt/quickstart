@@ -24,9 +24,10 @@ npm run dev
 ```
 
 `npm install` runs the full setup automatically: frontend, Composer, and
-a local Drupal 11 + SQLite backend. Needs PHP 8.3 and Composer on
-`PATH`. Without them, it installs the frontend only and prints the next
-steps.
+a local Drupal 11 + SQLite backend. It needs PHP 8.3 or newer and
+Composer on `PATH`. Without them it installs the frontend only, prints
+the next steps and still exits cleanly, so the install never fails on a
+machine that cannot run the backend.
 
 Removing `.git` starts your own history. To keep the starterkit as an
 upstream you can pull from, skip that step, or use the GitHub

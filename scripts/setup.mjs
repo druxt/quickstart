@@ -12,12 +12,11 @@
  *   this script never rewrites .env.
  *
  * The same pipeline is also triggered by `npm install` at the repository
- * root on a fresh checkout (scripts/postinstall.mjs) - that is what
- * makes `npx giget gh:druxt/quickstart my-site --install` install
- * everything, not just the (empty) root package.
+ * root on a fresh checkout (scripts/postinstall.mjs) - that is what makes
+ * the documented clone-and-install stand everything up, not just the
+ * (empty) root package.
  */
 
-import { spawnSync } from 'node:child_process'
 import path from 'node:path'
 import { pathToFileURL } from 'node:url'
 import {
@@ -27,7 +26,10 @@ import {
   acquireSetupLock,
   exitWithError,
   IS_WINDOWS,
+  MINIMUM_PHP,
   miseAvailable,
+  phpBelowMinimum,
+  phpVersion,
   releaseSetupLock,
   setupLockContentionMessage,
   WINDOWS_HELP,
@@ -49,21 +51,11 @@ const prerequisites = [
   },
 ]
 
-// Drupal 11's hard floor, and the version composer.json's config.platform
-// resolves against, so the committed lock installs here.
-const MINIMUM_PHP = [8, 3]
-
+// Loud on a direct `npm run setup`. postinstall.mjs screens the version
+// before it gets here, so `npm install` never exits through this.
 function checkPhpVersion() {
-  const result = spawnSync('php', ['-r', 'echo PHP_VERSION;'], { encoding: 'utf8' })
-  const version = (result.stdout || '').trim()
-  const match = version.match(/^(\d+)\.(\d+)/)
-  if (!match) {
-    // Unreadable version: let composer produce the error rather than
-    // guessing wrong here.
-    return
-  }
-  const [major, minor] = [Number(match[1]), Number(match[2])]
-  if (major > MINIMUM_PHP[0] || (major === MINIMUM_PHP[0] && minor >= MINIMUM_PHP[1])) {
+  const version = phpVersion()
+  if (!phpBelowMinimum(version)) {
     return
   }
   exitWithError(`PHP ${version} is too old - Drupal 11 needs PHP >= ${MINIMUM_PHP.join('.')}.`)

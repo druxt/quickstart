@@ -112,7 +112,14 @@ minor is for.
   and then failed in Composer. core-dev is gone - nothing here runs
   phpunit, and it was 86 of the 197 locked packages - and
   `config.platform.php` now pins resolution to 8.3, so a later update
-  cannot reintroduce the mismatch.
+  cannot reintroduce the mismatch. The consumer-install CI job runs on
+  8.3 so a pass means the documented minimum genuinely works.
+- `npm install` stays green when the PHP on `PATH` is too old. The setup
+  preflight rejects it with `process.exit`, which skips the catch that
+  keeps installs passing, so a machine with PHP 8.2 failed `npm install`
+  outright instead of getting the frontend-only fallback the missing-PHP
+  case gets. postinstall now screens the version itself and steps aside
+  with the version it found; `npm run setup` still fails loudly.
 
 ### Dependencies
 
