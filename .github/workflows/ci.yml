@@ -282,14 +282,15 @@ jobs:
             nuxt/cypress/screenshots
             nuxt/cypress/videos
 
-  # The documented consumer flow (README: clone, remove .git, install)
-  # is not what the jobs above exercise - they work from the git checkout
-  # and call .devtools/ directly. This job consumes the same tree a
-  # consumer gets: this exact commit, no .git, no preinstalled
-  # dependencies - and lets the root postinstall stand the whole site up.
+  # The documented consumer flow (README: `npx giget@1 ... --install`) is
+  # not what the jobs above exercise - they work from the git checkout
+  # and call .devtools/ directly. This job consumes the same artifact a
+  # giget user gets: a tarball of this exact commit, no .git, no
+  # preinstalled dependencies - and lets the root postinstall stand the
+  # whole site up.
   #
-  # `git archive` reproduces that tree without a second network fetch,
-  # and needs no newer Node than the site itself pins.
+  # `git archive` produces that tarball from the commit under test, which
+  # giget cannot do - it only fetches refs already pushed to GitHub.
   test_consumer_install:
     runs-on: ubuntu-latest
     steps:
@@ -310,12 +311,12 @@ jobs:
         with:
           node-version-file: .nvmrc
 
-      - name: Build the tree a consumer clones
+      - name: Build the tarball a giget consumer gets
         run: git archive --prefix=site/ HEAD | tar -x -C /tmp
 
       # `env -u CI`: postinstall deliberately steps aside on CI machines
       # - this job's whole point is to behave like a consumer machine.
-      - name: Root npm install (the README's install step)
+      - name: Root npm install (giget's --install step)
         working-directory: /tmp/site
         run: env -u CI npm install
 

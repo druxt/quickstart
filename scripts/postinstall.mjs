@@ -1,7 +1,7 @@
 /**
- * Runs after `npm install` at the repository root - including the
- * documented clone-and-install, where it is the first thing a new user
- * sees.
+ * Runs after `npm install` at the repository root - including
+ * `npx giget@1 gh:druxt/quickstart my-site --install`, where it is the
+ * first thing a new user sees.
  *
  * `--install` should install, so on a fresh checkout with PHP +
  * Composer available this triggers the full setup pipeline (the same

@@ -431,10 +431,11 @@ preview:
       echo "=================================================="
     - . ./code-server.env && sleep "$PREVIEW_LIVE_SECONDS"
 
-# The documented consumer flow (clone, remove .git, install) leaves a
-# tree with no .git and no preinstalled dependencies, and the root npm
-# install stands everything up. git archive produces that same tree from
-# this exact commit, without a second network fetch.
+# The documented consumer flow (`npx giget@1 gh:druxt/... my-site
+# --install`) consumes a tarball: no .git, no preinstalled dependencies,
+# and the root npm install stands everything up. git archive produces
+# that same artifact from this exact commit - giget itself can only
+# fetch refs already pushed to GitHub.
 test_consumer_install:
   extends: .php-node-setup
   # The documented minimum, so a pass means the lock and the provisioning

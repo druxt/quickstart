@@ -38,9 +38,10 @@ minor is for.
 ### Features
 
 - **One-command setup.** `npm install` on a fresh checkout provisions
-  everything, so cloning the starterkit and installing delivers a
-  running backend and frontend rather than an empty package. The same
-  pipeline is available as `npm run setup`.
+  everything, which is what makes
+  `npx giget@1 gh:druxt/quickstart my-site --install` deliver a running
+  backend and frontend rather than an empty package. The same pipeline
+  is available as `npm run setup`.
 - **A Docker-free local backend** in `drupal/.devtools/`: Composer
   install, a SQLite site install, the OAuth consumer, and a PHP built-in
   server, driven by `assemble`, `provision`, `start`, `stop` and `info`.
@@ -99,13 +100,14 @@ minor is for.
   the reader could not open. `npm run lint:private` now fails the build
   on any tracked file referencing a host that resolves only on a private
   network.
-- The documented install is a `git clone`, not `npx giget`. giget needs
-  Node 18 for `fetch`, while the site pins Node 16, so the headline
-  command failed on the exact version the README tells you to use, with
-  only `fetch is not defined` to explain itself. It looked fine on any
-  machine that had run giget before, because giget serves repeat fetches
-  from its cache. Cloning needs no Node at all, so the download and the
-  site now agree on one version.
+- The install command is pinned to `giget@1`. giget 2 and newer call
+  `fetch`, which needs Node 18, while the site pins Node 16, so the
+  headline command failed on the exact version the README tells you to
+  use, with only `fetch is not defined` to explain itself. It looked
+  fine on any machine that had run giget before, because giget serves
+  repeat fetches from its cache, so the failure hit new users rather
+  than maintainers. giget 1 bundles a fetch polyfill, so one Node
+  version now covers both the download and the site.
 - The committed lock installs on PHP 8.3, the version the setup
   preflight accepts. `drupal/core-dev` pulled in `doctrine/instantiator`
   2.1.0, which requires PHP 8.4, so an 8.3 machine passed the preflight

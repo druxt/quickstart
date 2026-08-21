@@ -12,9 +12,9 @@
  *   this script never rewrites .env.
  *
  * The same pipeline is also triggered by `npm install` at the repository
- * root on a fresh checkout (scripts/postinstall.mjs) - that is what makes
- * the documented clone-and-install stand everything up, not just the
- * (empty) root package.
+ * root on a fresh checkout (scripts/postinstall.mjs) - that is what
+ * makes `npx giget@1 gh:druxt/quickstart my-site --install` install
+ * everything, not just the (empty) root package.
  */
 
 import path from 'node:path'
