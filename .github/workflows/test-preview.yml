@@ -47,7 +47,7 @@ jobs:
     # workflow cancels the running preview (concurrency group above).
     timeout-minutes: 360
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
@@ -58,9 +58,16 @@ jobs:
           extensions: mbstring, pdo_sqlite, intl, gd, xml, zip, opcache
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
+          # setup-node v5 turned caching on by itself when package.json
+          # names a package manager, and keys it on the root lockfile
+          # alone. This job installs from nuxt/, so name both.
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            nuxt/package-lock.json
 
       - name: Assemble, provision, and start the Drupal backend
         working-directory: drupal

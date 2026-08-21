@@ -30,7 +30,8 @@
     "lint:knip": "knip --include dependencies,unlisted --no-config-hints",
     "lint:commit": "commitlint",
     "lint:audit": "npm audit --omit=dev --audit-level=high",
-    "lint:renovate": "npx --yes --package renovate renovate-config-validator"
+    "lint:renovate": "npx --yes --package renovate renovate-config-validator",
+    "lint:private": "node scripts/lint-private-refs.mjs"
   },
   "devDependencies": {
     "@commitlint/cli": "^21.2.2",
