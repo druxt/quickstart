@@ -81,7 +81,7 @@ async function main() {
   }
 
   if (!externalBackend && (!toolAvailable('php') || !toolAvailable('composer'))) {
-    console.log('  Node side ready. The backend needs PHP 8.4 + Composer (or DDEV).')
+    console.log('  Node side ready. The backend needs PHP 8.3+ and Composer (or DDEV).')
     console.log('')
     printNextSteps(
       miseAvailable()

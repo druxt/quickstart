@@ -16,14 +16,22 @@ This repository includes:
 ## Quickstart
 
 ```bash
-npx giget@latest gh:druxt/quickstart#develop my-druxt-site --install
+git clone --depth=1 -b develop https://github.com/druxt/quickstart.git my-druxt-site
 cd my-druxt-site
+rm -rf .git
+npm install
 npm run dev
 ```
 
-`--install` runs the full setup automatically: frontend, Composer, and a
-local Drupal 11 + SQLite backend. Needs PHP 8.4 and Composer on `PATH`.
-Without them, it installs the frontend only and prints the next steps.
+`npm install` runs the full setup automatically: frontend, Composer, and
+a local Drupal 11 + SQLite backend. Needs PHP 8.3 and Composer on
+`PATH`. Without them, it installs the frontend only and prints the next
+steps.
+
+Removing `.git` starts your own history. To keep the starterkit as an
+upstream you can pull from, skip that step, or use the GitHub
+[Use this template](https://github.com/druxt/quickstart/generate) button
+and clone the repository it creates.
 
 ## Themed starts
 
@@ -37,8 +45,8 @@ They are being replaced with reusable theme packages - see
 
 Requires [Node 16](.nvmrc) and one of:
 
-- PHP 8.4 (with the pdo_sqlite extension) + Composer on your machine
-  (Drush comes with the backend - no global install needed), or
+- PHP 8.3 or newer (with the pdo_sqlite extension) + Composer on your
+  machine (Drush comes with the backend - no global install needed), or
 - [DDEV](https://ddev.readthedocs.io) or [Lando](https://lando.dev) (Docker)
 
 On Windows, use the [dev container](#development-container-vs-code-codespaces-devpod),

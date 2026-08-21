@@ -38,10 +38,9 @@ minor is for.
 ### Features
 
 - **One-command setup.** `npm install` on a fresh checkout provisions
-  everything, which is what makes
-  `npx giget gh:druxt/quickstart my-site --install` deliver a running
-  backend and frontend rather than an empty package. The same pipeline
-  is available as `npm run setup`.
+  everything, so cloning the starterkit and installing delivers a
+  running backend and frontend rather than an empty package. The same
+  pipeline is available as `npm run setup`.
 - **A Docker-free local backend** in `drupal/.devtools/`: Composer
   install, a SQLite site install, the OAuth consumer, and a PHP built-in
   server, driven by `assemble`, `provision`, `start`, `stop` and `info`.
@@ -59,8 +58,8 @@ minor is for.
   so immediately and names the routes that do work, instead of failing
   part way through key generation.
 - **Test coverage**: end-to-end tests that provision a real backend and
-  drive the built frontend, a test of the documented `giget` install
-  path, guard-rail tests for machines without PHP, container environment
+  drive the built frontend, a test of the documented install path,
+  guard-rail tests for machines without PHP, container environment
   tests for DDEV, Lando and the dev container, and unit tests for the
   setup scripts.
 - **A lint suite** - ESLint, Prettier, cspell, markdownlint, knip,
@@ -100,6 +99,20 @@ minor is for.
   the reader could not open. `npm run lint:private` now fails the build
   on any tracked file referencing a host that resolves only on a private
   network.
+- The documented install is a `git clone`, not `npx giget`. giget needs
+  Node 18 for `fetch`, while the site pins Node 16, so the headline
+  command failed on the exact version the README tells you to use, with
+  only `fetch is not defined` to explain itself. It looked fine on any
+  machine that had run giget before, because giget serves repeat fetches
+  from its cache. Cloning needs no Node at all, so the download and the
+  site now agree on one version.
+- The committed lock installs on PHP 8.3, the version the setup
+  preflight accepts. `drupal/core-dev` pulled in `doctrine/instantiator`
+  2.1.0, which requires PHP 8.4, so an 8.3 machine passed the preflight
+  and then failed in Composer. core-dev is gone - nothing here runs
+  phpunit, and it was 86 of the 197 locked packages - and
+  `config.platform.php` now pins resolution to 8.3, so a later update
+  cannot reintroduce the mismatch.
 
 ### Dependencies
 

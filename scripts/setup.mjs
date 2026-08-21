@@ -41,7 +41,7 @@ import {
 const prerequisites = [
   {
     command: 'php',
-    hint: 'PHP 8.4+ with the usual Drupal extensions - https://www.php.net/manual/en/install.php',
+    hint: 'PHP 8.3+ with the usual Drupal extensions - https://www.php.net/manual/en/install.php',
   },
   {
     command: 'composer',
@@ -49,8 +49,8 @@ const prerequisites = [
   },
 ]
 
-// Drupal 11's hard floor. This repo targets 8.4 (see mise.toml), but
-// composer resolves against 8.3 - reject only what can never work.
+// Drupal 11's hard floor, and the version composer.json's config.platform
+// resolves against, so the committed lock installs here.
 const MINIMUM_PHP = [8, 3]
 
 function checkPhpVersion() {
@@ -66,9 +66,7 @@ function checkPhpVersion() {
   if (major > MINIMUM_PHP[0] || (major === MINIMUM_PHP[0] && minor >= MINIMUM_PHP[1])) {
     return
   }
-  exitWithError(
-    `PHP ${version} is too old - Drupal 11 needs PHP >= ${MINIMUM_PHP.join('.')} (8.4 recommended, see mise.toml).`
-  )
+  exitWithError(`PHP ${version} is too old - Drupal 11 needs PHP >= ${MINIMUM_PHP.join('.')}.`)
 }
 
 function checkPrerequisites() {

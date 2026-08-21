@@ -17,6 +17,7 @@ extensionless
 gdlib
 giget
 hverlin
+instantiator
 intelephense
 interruptible
 knip
@@ -48,6 +49,7 @@ openssl
 openvscode
 phpsab
 phpstan
+phpunit
 PKCE
 recognise
 recognised
