@@ -31,6 +31,15 @@ const PRIVATE = [
   'http://10.0.0.5:8080/status',
   'http://192.168.1.20/admin',
   'http://172.16.4.4/admin',
+  // Userinfo, which is how a git remote is usually written. An earlier
+  // version captured the username as the host and let these through.
+  'https://user@gitlab.local/drupal/druxt',
+  'https://oauth2:TOKEN@gitlab.local/drupal/druxt',
+  'ssh://git@gitlab.local/drupal/druxt.git',
+  // Unique local and link-local IPv6, bracketed as a URL carries them.
+  'http://[fd00::1]/admin',
+  'http://[fc00::5]/admin',
+  'http://[fe80::1]/admin',
 ]
 
 /** Hosts this project genuinely uses, which must never be flagged. */
@@ -43,6 +52,9 @@ const ALLOWED = [
   'https://github.com/druxt/quickstart',
   'http://172.15.0.1/outside-the-block',
   'http://172.32.0.1/outside-the-block',
+  'https://user@github.com/druxt/quickstart',
+  'http://[::1]:3000/callback',
+  'http://[2001:db8::1]/documentation-range',
 ]
 
 describe('findPrivateRefs', () => {
