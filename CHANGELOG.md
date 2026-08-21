@@ -96,6 +96,11 @@ minor is for.
   that range has a callback registered, so any of them is safe. A `PORT`
   you name is still yours - a busy one fails, rather than moving
   somewhere you did not ask for.
+- The dev server refuses a port with no registered OAuth callback. A
+  `PORT` outside 3000-3009 that `OAUTH_CALLBACK` does not name started
+  fine and then failed only at login, since the browser builds its
+  callback from the port it is on. Backends this repo did not provision
+  are left alone: their consumers were registered out of sight.
 - The dev container no longer leaves Xdebug active, which made every
   `php` and `composer` call wait for a debugger.
 - The druxt patch is described without a link to a private merge

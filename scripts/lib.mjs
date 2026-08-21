@@ -235,6 +235,16 @@ export async function waitForPort(host, port, timeoutSeconds = 30) {
  */
 export const FRONTEND_PORTS = Array.from({ length: 10 }, (_, index) => 3000 + index)
 
+/**
+ * True when this repo's own tooling provisioned the backend, and so
+ * knows what its OAuth consumer has registered. A remote backend was
+ * set up somewhere this checkout cannot see, so its registrations are
+ * not this repo's to assert.
+ */
+export function backendIsProvisionedHere(backend) {
+  return Boolean(backend.managed || backend.ddev || backend.lando)
+}
+
 /** True when a port has an OAuth callback registered for it. */
 export function portIsRegistered(port) {
   return FRONTEND_PORTS.includes(port)

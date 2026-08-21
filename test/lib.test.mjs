@@ -16,6 +16,7 @@ import { after, before, describe, it } from 'node:test'
 import {
   acquireSetupLock,
   backendInfo,
+  backendIsProvisionedHere,
   DRUPAL_DIR,
   firstFreePort,
   FRONTEND_PORTS,
@@ -75,6 +76,26 @@ describe('backendInfo', () => {
     // from here, so classification is by hostname.
     const backend = backendInfo({ BASE_URL: 'http://anything.ddev.site' })
     assert.equal(backend.managed, false)
+  })
+})
+
+describe('backendIsProvisionedHere', () => {
+  it('claims the backends this repo sets up', () => {
+    const ours = [
+      'http://127.0.0.1:8888',
+      'https://quickstart-druxtsite.ddev.site',
+      'https://druxt-quickstart.lndo.site',
+    ]
+    for (const url of ours) {
+      assert.equal(backendIsProvisionedHere(backendInfo({ BASE_URL: url })), true, url)
+    }
+  })
+
+  it('disclaims a backend set up somewhere else', () => {
+    // Its consumer was registered out of sight, so what callbacks it
+    // accepts is not this checkout's to assert.
+    const backend = backendInfo({ BASE_URL: 'https://demo-api.druxtjs.org' })
+    assert.equal(backendIsProvisionedHere(backend), false)
   })
 })
 

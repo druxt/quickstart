@@ -9,6 +9,7 @@ import { checkOauth } from './check-oauth.mjs'
 import {
   FRONTEND_PORTS,
   NUXT_DIR,
+  backendIsProvisionedHere,
   ensureBackend,
   ensureOauthClientId,
   exitWithError,
@@ -81,55 +82,83 @@ async function resolveFrontendPort() {
   return port
 }
 
+/** The port OAUTH_CALLBACK names, or null when it names nothing usable. */
+function callbackPort(callback) {
+  if (!callback) {
+    return null
+  }
+  try {
+    const parsed = new URL(callback)
+    return Number(parsed.port) || (parsed.protocol === 'https:' ? 443 : 80)
+  } catch {
+    return null
+  }
+}
+
 /**
- * The consumer is registered for one callback URL plus the whole
- * FRONTEND_PORTS range. Serving the frontend anywhere else fails the
- * same way a busy port does, just without anything else looking wrong.
+ * Refuse a frontend port Drupal has no callback registered for.
+ *
+ * The browser builds redirect_uri from its own origin, so serving on an
+ * unregistered port fails login with `invalid_client` while the rest of
+ * the site works. Provisioning registers FRONTEND_PORTS plus whatever
+ * OAUTH_CALLBACK names, and those are the only safe ports.
+ *
+ * Checking REQUESTED_PORT covers the port actually served: resolution
+ * either keeps that port or moves inside FRONTEND_PORTS, which is
+ * registered either way.
  */
-function ensureCallbackMatchesPort(port) {
-  // Provisioning registers the range whatever OAUTH_CALLBACK says, so
-  // a port from it is always accepted.
-  if (portIsRegistered(port)) {
+function ensurePortHasCallback(backend) {
+  if (portIsRegistered(REQUESTED_PORT)) {
     return
   }
 
   const callback = readEnv().OAUTH_CALLBACK
-  if (!callback) {
+  const port = callbackPort(callback)
+  if (port === REQUESTED_PORT) {
     return
   }
 
-  let parsed
-  try {
-    parsed = new URL(callback)
-  } catch {
-    return
+  if (port !== null) {
+    exitWithError(
+      `OAUTH_CALLBACK names port ${port}, but the dev server would run on ${REQUESTED_PORT}.\n\n` +
+        `  Login would fail with {"error":"invalid_client"} - Drupal only accepts the\n` +
+        `  callback it has registered (${callback}).\n\n` +
+        `  Either start on that port with \`PORT=${port} npm run dev\`, or set\n` +
+        `  OAUTH_CALLBACK to port ${REQUESTED_PORT} and re-run \`npm run provision\` to\n` +
+        `  re-register the consumer.`
+    )
   }
 
-  const callbackPort = Number(parsed.port) || (parsed.protocol === 'https:' ? 443 : 80)
-  if (callbackPort === port) {
+  // Nothing registers this port. Only say so for a backend this repo
+  // provisioned - a remote one registered its consumer out of sight.
+  if (!backendIsProvisionedHere(backend)) {
     return
   }
 
   exitWithError(
-    `OAUTH_CALLBACK names port ${callbackPort}, but the dev server would run on ${port}.\n\n` +
-      `  Login would fail with {"error":"invalid_client"} - Drupal only accepts the\n` +
-      `  callback it has registered (${callback}).\n\n` +
-      `  Either start on that port with \`PORT=${callbackPort} npm run dev\`, or set\n` +
-      `  OAUTH_CALLBACK to port ${port} and re-run \`npm run provision\` to\n` +
-      `  re-register the consumer.`
+    `PORT is ${REQUESTED_PORT}, which has no OAuth callback registered.\n\n` +
+      `  Login would fail with {"error":"invalid_client"} while the rest of the\n` +
+      `  site works - the browser builds its callback from the port it is on,\n` +
+      `  and Drupal registers ${PORT_RANGE} plus whatever OAUTH_CALLBACK names.\n\n` +
+      `  Use a port from ${PORT_RANGE}, or set OAUTH_CALLBACK in .env to\n` +
+      `  http://localhost:${REQUESTED_PORT}/callback and re-run \`npm run provision\`\n` +
+      `  to register it.`
   )
 }
 
 async function main() {
-  await ensureBackend()
+  const backend = await ensureBackend()
   ensureOauthClientId()
-  const port = await resolveFrontendPort()
-  ensureCallbackMatchesPort(port)
+  ensurePortHasCallback(backend)
   // Confirm the backend will actually accept this consumer. Nuxt reads
   // OAUTH_CLIENT_ID once at startup, so a stale value - or a consumer
   // left over from an older provision - shows up only as a failed login
   // in the browser, with nothing in the terminal to explain it.
   await checkOauth()
+  // Last thing before the spawn. Everything above is config, and none of
+  // it needs the port, so choosing one here leaves the smallest window
+  // for another process to take it in the meantime.
+  const port = await resolveFrontendPort()
   console.log(`Starting the Nuxt dev server -> http://localhost:${port}`)
   console.log('')
   process.exitCode = await foregroundNpm(['run', 'dev'], {

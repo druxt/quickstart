@@ -153,6 +153,10 @@ Naming a port yourself turns that off: `PORT=3005 npm run dev` uses
 default. If the whole range is busy, `npm run dev` says so instead of
 letting Nuxt fall back to a random port and break login.
 
+A port outside 3000-3009 has no registered callback, so `npm run dev`
+refuses that too. To use one, set `OAUTH_CALLBACK` in `.env` to
+`http://localhost:<port>/callback` and re-run `npm run provision`.
+
 #### Login fails with invalid_client in a dev container
 
 The browser builds the OAuth callback from its own address. An IDE

@@ -54,15 +54,22 @@ function occupyPort(port) {
 }
 
 /**
- * A backend that rejects the consumer, so dev.mjs runs its port
- * handling for real and then stops at the OAuth check rather than
- * trying to start Nuxt (there is no nuxt/ in the throwaway workspace).
+ * A backend that answers the OAuth check the way a provisioned Drupal
+ * does: authorize redirects to the login form, and a bogus code is
+ * rejected as a bad code. dev.mjs gets past `checkOauth` and reaches
+ * its port handling, then fails trying to start Nuxt - there is no
+ * nuxt/ in the throwaway workspace, which is what ends each run.
  */
 function stubBackend() {
   return new Promise((resolve) => {
-    const server = http.createServer((_request, response) => {
-      response.writeHead(401, { 'content-type': 'application/json' })
-      response.end(JSON.stringify({ error: 'invalid_client' }))
+    const server = http.createServer((request, response) => {
+      if (request.url.startsWith('/oauth/token')) {
+        response.writeHead(400, { 'content-type': 'application/json' })
+        response.end(JSON.stringify({ error: 'invalid_grant' }))
+        return
+      }
+      response.writeHead(302, { location: '/user/login' })
+      response.end()
     })
     server.listen(0, '127.0.0.1', () => resolve({ server, port: server.address().port }))
   })
@@ -99,7 +106,7 @@ function run(script, { env = {}, stripPhp = false } = {}) {
 
 describe('dev guards', () => {
   it('refuses to start when PORT names a port that is taken', async () => {
-    const backend = await occupy()
+    const backend = await stubBackend()
     const frontend = await occupy()
     writeEnv([
       `BASE_URL=http://127.0.0.1:${backend.port}`,
@@ -132,8 +139,8 @@ describe('dev guards', () => {
     backend.server.close()
 
     assert.match(output, /Port 3000 is in use - starting on 300[1-9] instead/)
-    // It carried on: the OAuth check is the next thing dev.mjs does.
-    assert.match(output, /OAUTH_CLIENT_ID/)
+    // It carried on, and starts Nuxt on the port it announced.
+    assert.match(output, /Starting the Nuxt dev server -> http:\/\/localhost:300[1-9]/)
   })
 
   it('says so when every registered port is taken', async () => {
@@ -148,6 +155,32 @@ describe('dev guards', () => {
     assert.equal(code, 1)
     assert.match(output, /Ports 3000-3009 are all in use/)
     assert.match(output, /invalid_client/)
+  })
+
+  it('refuses a PORT that nothing has registered a callback for', async () => {
+    // 4000 is outside 3000-3009 and no OAUTH_CALLBACK names it, so the
+    // browser would send a callback Drupal has never heard of.
+    const backend = await occupy()
+    writeEnv([`BASE_URL=http://127.0.0.1:${backend.port}`, 'OAUTH_CLIENT_ID=test-client'])
+
+    const { code, output } = await run('dev.mjs', { env: { PORT: '4000' } })
+    backend.server.close()
+
+    assert.equal(code, 1)
+    assert.match(output, /no OAuth callback registered/)
+    assert.match(output, /invalid_client/)
+  })
+
+  it('leaves an external backend to police its own callbacks', async () => {
+    // Nothing here provisioned that consumer, so what it accepts is not
+    // this checkout's to assert. `.invalid` never resolves, so the run
+    // ends at the OAuth check without reaching the network.
+    writeEnv(['BASE_URL=http://druxt-nowhere.invalid', 'OAUTH_CLIENT_ID=test-client'])
+
+    const { output } = await run('dev.mjs', { env: { PORT: '4000' } })
+
+    assert.match(output, /Backend \(external\)/)
+    assert.doesNotMatch(output, /no OAuth callback registered/)
   })
 
   it('refuses to start when the callback names another port', async () => {
