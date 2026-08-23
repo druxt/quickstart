@@ -134,6 +134,15 @@ minor is for.
 
 ### Dependencies
 
+- `drupal/decoupled_router` is held below 2.0.7. That release gave
+  `RouterPathTranslatorSubscriber::onPathTranslation()` a `: void` return
+  type, and druxt 1.2.1 declares its three subscribers without one, so
+  the container fails to rebuild: `drush cr` aborts, Drupal keeps serving
+  from the old container, and druxt's subscribers are silently absent.
+  Nothing here required decoupled_router directly, so only the lock stood
+  between an update and a broken site. The constraint comes off when
+  druxt releases a version carrying the fix
+  ([#3618675](https://www.drupal.org/i/3618675)).
 - GitHub Actions on v7: `actions/checkout`, `actions/setup-node`,
   `actions/upload-artifact` and `codecov/codecov-action`.
 - Nuxt dependencies: core-js 3.50.0, dotenv 17, Cypress 15,
