@@ -194,6 +194,24 @@ PHP);
 dotenv_write_var('OAUTH_CLIENT_ID', $client_id);
 PASS('Consumer created (client ID %s); OAUTH_CLIENT_ID written to ../.env.', $client_id);
 
+TASK('Granting the OAuth consent permission.');
+// simple_oauth refuses the consent form to anyone without this, so the
+// authorize step returns to itself with "The 'grant simple_oauth codes'
+// permission is required." and no login can complete. User 1 bypasses
+// permission checks, which is why a site provisioned without it still logs
+// in as admin while every real account fails. The role matches the scope's
+// granularity above.
+drush('role:perm:add authenticated %s', 'grant simple_oauth codes');
+// Read it back. This is the same class of silent failure as the consumer's
+// empty client_id: everything else works, and only login breaks.
+drush('php-eval %s', <<<'PHP'
+$role = \Drupal\user\Entity\Role::load("authenticated");
+if (!$role || !$role->hasPermission("grant simple_oauth codes")) {
+  throw new \RuntimeException("The authenticated role cannot grant OAuth2 codes - the consent screen will refuse every login.");
+}
+PHP);
+PASS('authenticated can grant OAuth2 codes.');
+
 echo PHP_EOL;
 echo '===============================' . PHP_EOL;
 echo '   🚀 PROVISION COMPLETE  ✅  ' . PHP_EOL;
