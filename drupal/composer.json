@@ -15,16 +15,16 @@
         }
     ],
     "require": {
-        "composer/installers": "^2.2",
-        "cweagans/composer-patches": "^2.0@beta",
+        "composer/installers": "^2.3.0",
+        "cweagans/composer-patches": "^2.0.0@beta",
         "drupal/core-composer-scaffold": "~11",
         "drupal/core-project-message": "~11",
         "drupal/core-recommended": "~11",
-        "drupal/decoupled_router": "^2.0 <2.0.7",
-        "drupal/druxt": "^1.2",
+        "drupal/decoupled_router": "^2.0.7 <2.0.8",
+        "drupal/druxt": "^1.2.2",
         "drupal/simple_oauth": "^6",
         "drush/drush": "^13",
-        "vlucas/phpdotenv": "^5.5"
+        "vlucas/phpdotenv": "^5.7.0"
     },
     "conflict": {
         "drupal/drupal": "*"
