@@ -26,7 +26,7 @@ minor is for.
 ### Breaking changes
 
 - Drupal 9 to **Drupal 11.4.5**, with the Druxt ecosystem modules on
-  their D11-compatible releases (druxt 1.2.1, decoupled_router 2.0.6,
+  their D11-compatible releases (druxt 1.2.2, decoupled_router 2.0.7,
   simple_oauth 6.x, jsonapi_menu_items, jsonapi_views).
 - The Gitpod and CircleCI configuration is gone, replaced by a dev
   container and GitHub Actions / GitLab CI.
@@ -147,15 +147,20 @@ minor is for.
 
 ### Dependencies
 
-- `drupal/decoupled_router` is held below 2.0.7. That release gave
+- `drupal/druxt` `^1.2.2` and `drupal/decoupled_router` `^2.0`, locked at
+  1.2.2 and 2.0.7. decoupled_router 2.0.7 gave
   `RouterPathTranslatorSubscriber::onPathTranslation()` a `: void` return
-  type, and druxt 1.2.1 declares its three subscribers without one, so
-  the container fails to rebuild: `drush cr` aborts, Drupal keeps serving
-  from the old container, and druxt's subscribers are silently absent.
-  Nothing here required decoupled_router directly, so only the lock stood
-  between an update and a broken site. The constraint comes off when
-  druxt releases a version carrying the fix
-  ([#3618675](https://www.drupal.org/i/3618675)).
+  type, and druxt 1.2.1 declared its three subscribers without one, so
+  the container failed to rebuild: `drush cr` aborted, Drupal kept
+  serving from the old container, and druxt's subscribers were silently
+  absent. druxt 1.2.2 carries the fix
+  ([#3618675](https://www.drupal.org/i/3618675)), so the hold below
+  2.0.7 is gone, and `^1.2.2` rather than `^1.2` stops Composer putting
+  1.2.1 next to 2.0.7 again.
+- The local `ViewsPathTranslatorSubscriber` patch is dropped: both fixes
+  it carried shipped in druxt 1.2.2
+  ([#3558380](https://www.drupal.org/i/3558380),
+  [#3618677](https://www.drupal.org/i/3618677)).
 - GitHub Actions on v7: `actions/checkout`, `actions/setup-node`,
   `actions/upload-artifact` and `codecov/codecov-action`.
 - Nuxt dependencies: core-js 3.50.0, dotenv 17, Cypress 15,
