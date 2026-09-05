@@ -5,8 +5,8 @@
 # bundled with Node). This Node version bundles npm 8.19.2, matching
 # package.json's "packageManager" field.
 [tools]
-node = "16.18.1"
-php = "8.4"
+node = "16.20.2"
+php = "8.5.10"
 
 [tasks.setup]
 description = "Install frontend deps, provision Drupal (SQLite), start the backend."

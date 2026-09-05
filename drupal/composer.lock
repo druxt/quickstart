@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "b3421cbdcfecc946cc0ca6023d068677",
+    "content-hash": "495959fc157ecda6a29ff4d685fb522e",
     "packages": [
         {
             "name": "asm89/stack-cors",
@@ -1568,17 +1568,17 @@
         },
         {
             "name": "drupal/decoupled_router",
-            "version": "2.0.6",
+            "version": "2.0.7",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/decoupled_router.git",
-                "reference": "2.0.6"
+                "reference": "2.0.7"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/decoupled_router-2.0.6.zip",
-                "reference": "2.0.6",
-                "shasum": "93a725c93cac4f5c03c729c3984d926c4c52014e"
+                "url": "https://ftp.drupal.org/files/projects/decoupled_router-2.0.7.zip",
+                "reference": "2.0.7",
+                "shasum": "448bf05bc840b442025aea547a7c3cb0dd600fb9"
             },
             "require": {
                 "drupal/core": "^10.1 || ^11",
@@ -1593,8 +1593,8 @@
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "2.0.6",
-                    "datestamp": "1757356868",
+                    "version": "2.0.7",
+                    "datestamp": "1787382329",
                     "security-coverage": {
                         "status": "covered",
                         "message": "Covered by Drupal's security advisory policy"
@@ -1628,20 +1628,20 @@
         },
         {
             "name": "drupal/druxt",
-            "version": "1.2.1",
+            "version": "1.2.2",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/druxt.git",
-                "reference": "1.2.1"
+                "reference": "1.2.2"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/druxt-1.2.1.zip",
-                "reference": "1.2.1",
-                "shasum": "e12e8e22b172ac1cff11f92cd9de14a500ad927b"
+                "url": "https://ftp.drupal.org/files/projects/druxt-1.2.2.zip",
+                "reference": "1.2.2",
+                "shasum": "44a98ebb2e3d2471446ea609e0dfbc0c648ab99b"
             },
             "require": {
-                "drupal/core": "^8.8 || ^9 || ^10 || ^11",
+                "drupal/core": "^10 || ^11 || ^12",
                 "drupal/decoupled_router": "^2.0",
                 "drupal/jsonapi_menu_items": "^1.2",
                 "drupal/jsonapi_views": "^1.1"
@@ -1649,8 +1649,8 @@
             "type": "drupal-module",
             "extra": {
                 "drupal": {
-                    "version": "1.2.1",
-                    "datestamp": "1754365299",
+                    "version": "1.2.2",
+                    "datestamp": "1788585538",
                     "security-coverage": {
                         "status": "covered",
                         "message": "Covered by Drupal's security advisory policy"
@@ -2148,24 +2148,24 @@
         },
         {
             "name": "graham-campbell/result-type",
-            "version": "v1.1.4",
+            "version": "v1.2.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/GrahamCampbell/Result-Type.git",
-                "reference": "e01f4a821471308ba86aa202fed6698b6b695e3b"
+                "reference": "adccca3324eece92ca35463648c12b9e6293c05b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/GrahamCampbell/Result-Type/zipball/e01f4a821471308ba86aa202fed6698b6b695e3b",
-                "reference": "e01f4a821471308ba86aa202fed6698b6b695e3b",
+                "url": "https://api.github.com/repos/GrahamCampbell/Result-Type/zipball/adccca3324eece92ca35463648c12b9e6293c05b",
+                "reference": "adccca3324eece92ca35463648c12b9e6293c05b",
                 "shasum": ""
             },
             "require": {
                 "php": "^7.2.5 || ^8.0",
-                "phpoption/phpoption": "^1.9.5"
+                "phpoption/phpoption": "^1.10"
             },
             "require-dev": {
-                "phpunit/phpunit": "^8.5.41 || ^9.6.22 || ^10.5.45 || ^11.5.7"
+                "phpunit/phpunit": "^8.5.52 || ^9.6.34 || ^10.5.63 || ^11.5.55 || ^12.5.14"
             },
             "type": "library",
             "autoload": {
@@ -2194,7 +2194,7 @@
             ],
             "support": {
                 "issues": "https://github.com/GrahamCampbell/Result-Type/issues",
-                "source": "https://github.com/GrahamCampbell/Result-Type/tree/v1.1.4"
+                "source": "https://github.com/GrahamCampbell/Result-Type/tree/v1.2.0"
             },
             "funding": [
                 {
@@ -2206,7 +2206,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2025-12-27T19:43:20+00:00"
+            "time": "2026-08-24T09:06:52+00:00"
         },
         {
             "name": "grasmash/expander",
@@ -3979,16 +3979,16 @@
         },
         {
             "name": "phpoption/phpoption",
-            "version": "1.9.5",
+            "version": "1.10.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/schmittjoh/php-option.git",
-                "reference": "75365b91986c2405cf5e1e012c5595cd487a98be"
+                "reference": "67b192b6a42ec03944b972d6e633ddec78ad2c6d"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/schmittjoh/php-option/zipball/75365b91986c2405cf5e1e012c5595cd487a98be",
-                "reference": "75365b91986c2405cf5e1e012c5595cd487a98be",
+                "url": "https://api.github.com/repos/schmittjoh/php-option/zipball/67b192b6a42ec03944b972d6e633ddec78ad2c6d",
+                "reference": "67b192b6a42ec03944b972d6e633ddec78ad2c6d",
                 "shasum": ""
             },
             "require": {
@@ -3996,7 +3996,7 @@
             },
             "require-dev": {
                 "bamarni/composer-bin-plugin": "^1.8.2",
-                "phpunit/phpunit": "^8.5.44 || ^9.6.25 || ^10.5.53 || ^11.5.34"
+                "phpunit/phpunit": "^8.5.54 || ^9.6.36 || ^10.5.64 || ^11.5.56 || ^12.5.33"
             },
             "type": "library",
             "extra": {
@@ -4038,7 +4038,7 @@
             ],
             "support": {
                 "issues": "https://github.com/schmittjoh/php-option/issues",
-                "source": "https://github.com/schmittjoh/php-option/tree/1.9.5"
+                "source": "https://github.com/schmittjoh/php-option/tree/1.10.0"
             },
             "funding": [
                 {
@@ -4050,7 +4050,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2025-12-27T19:41:33+00:00"
+            "time": "2026-08-24T00:54:40+00:00"
         },
         {
             "name": "phpowermove/docblock",
@@ -8073,23 +8073,23 @@
         },
         {
             "name": "vlucas/phpdotenv",
-            "version": "v5.6.4",
+            "version": "v5.7.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/vlucas/phpdotenv.git",
-                "reference": "416df702837983f8d5ff48c9c3fee4f5f57b980b"
+                "reference": "301c07936b16d88628b126b01d082ba153cf4c40"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/vlucas/phpdotenv/zipball/416df702837983f8d5ff48c9c3fee4f5f57b980b",
-                "reference": "416df702837983f8d5ff48c9c3fee4f5f57b980b",
+                "url": "https://api.github.com/repos/vlucas/phpdotenv/zipball/301c07936b16d88628b126b01d082ba153cf4c40",
+                "reference": "301c07936b16d88628b126b01d082ba153cf4c40",
                 "shasum": ""
             },
             "require": {
                 "ext-pcre": "*",
-                "graham-campbell/result-type": "^1.1.4",
+                "graham-campbell/result-type": "^1.2",
                 "php": "^7.2.5 || ^8.0",
-                "phpoption/phpoption": "^1.9.5",
+                "phpoption/phpoption": "^1.10",
                 "symfony/polyfill-ctype": "^1.26",
                 "symfony/polyfill-mbstring": "^1.26",
                 "symfony/polyfill-php80": "^1.26"
@@ -8133,7 +8133,7 @@
                     "homepage": "https://github.com/vlucas"
                 }
             ],
-            "description": "Loads environment variables from `.env` to `getenv()`, `$_ENV` and `$_SERVER` automagically.",
+            "description": "Loads environment variables from `.env` to `$_ENV` and `$_SERVER` automagically, and optionally to `getenv()`.",
             "keywords": [
                 "dotenv",
                 "env",
@@ -8141,7 +8141,7 @@
             ],
             "support": {
                 "issues": "https://github.com/vlucas/phpdotenv/issues",
-                "source": "https://github.com/vlucas/phpdotenv/tree/v5.6.4"
+                "source": "https://github.com/vlucas/phpdotenv/tree/v5.7.0"
             },
             "funding": [
                 {
@@ -8153,7 +8153,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-07-06T19:11:50+00:00"
+            "time": "2026-08-24T18:07:49+00:00"
         }
     ],
     "packages-dev": [],
