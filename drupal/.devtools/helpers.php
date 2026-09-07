@@ -245,6 +245,107 @@ function find_free_port(int $start = 8888, int $max_attempts = 100): int {
 }
 
 /**
+ * Whether something is already accepting connections on a host and port.
+ *
+ * Used as a pre-flight guard, not a readiness probe: a readiness probe
+ * that only asks "is the port answering" cannot tell our own server from
+ * a stranger's, which is how a failed bind used to read as a good start.
+ */
+function port_is_open(string $host, string $port, float $timeout = 0.5): bool {
+  $conn = @stream_socket_client(sprintf('tcp://%s:%s', $host, $port), $errno, $errstr, $timeout);
+  if ($conn === FALSE) {
+    return FALSE;
+  }
+  fclose($conn);
+
+  return TRUE;
+}
+
+/**
+ * Describe whatever holds a port, for an error message. '' when unknown.
+ */
+function port_holder(string $port): string {
+  $pids = [];
+  @exec(sprintf('lsof -ti:%s 2>/dev/null', escapeshellarg($port)), $pids);
+  foreach ($pids as $pid) {
+    $pid = trim((string) $pid);
+    if ($pid === '' || !ctype_digit($pid)) {
+      continue;
+    }
+    $command = process_command((int) $pid);
+    if ($command !== '') {
+      return sprintf('pid %d: %s', (int) $pid, $command);
+    }
+  }
+
+  return '';
+}
+
+/**
+ * The command line of a process, or '' when it cannot be read.
+ *
+ * `/proc` first so this works on images without procps. Note the asymmetry
+ * with pid_is_running(): an unknown liveness must not be read as "dead", but
+ * an unknown command line must not be read as "ours", because the caller uses
+ * it to decide what to kill. Uncertainty is safe in opposite directions.
+ */
+function process_command(int $pid): string {
+  if ($pid < 1) {
+    return '';
+  }
+
+  $cmdline = @file_get_contents(sprintf('/proc/%d/cmdline', $pid));
+  if ($cmdline !== FALSE && $cmdline !== '') {
+    return trim(str_replace("\0", ' ', $cmdline));
+  }
+
+  return trim((string) @shell_exec(sprintf('ps -p %d -o command= 2>/dev/null', $pid)));
+}
+
+/**
+ * Whether a process id is still running.
+ *
+ * Returns NULL when it cannot be determined, which callers must not read as
+ * "dead". The first version shelled out to `ps` and treated its absence as a
+ * dead process, so on an image without procps (the `php:8.3` CI image, for
+ * one) a perfectly healthy server was reported as having exited. A liveness
+ * check that cannot answer has to say so rather than guess the alarming
+ * answer.
+ *
+ * @return bool|null
+ *   TRUE if running, FALSE if definitely not, NULL if undeterminable.
+ */
+function pid_is_running(int $pid): ?bool {
+  if ($pid < 1) {
+    return FALSE;
+  }
+
+  // Signal 0 performs the permission and existence checks without sending
+  // anything. Native, no subprocess, and the usual answer for this.
+  if (function_exists('posix_kill')) {
+    if (posix_kill($pid, 0)) {
+      return TRUE;
+    }
+    // ESRCH means no such process; EPERM means it exists but is not ours.
+    return function_exists('posix_get_last_error')
+      && posix_get_last_error() === (defined('PCNTL_ESRCH') ? PCNTL_ESRCH : 3)
+      ? FALSE
+      : NULL;
+  }
+
+  // Linux without the posix extension.
+  if (is_dir('/proc')) {
+    return is_dir('/proc/' . $pid);
+  }
+
+  // Last resort. An empty result here is genuinely ambiguous, because it is
+  // also what a missing `ps` produces, so it reports unknown rather than dead.
+  $out = trim((string) @shell_exec(sprintf('ps -p %d -o pid= 2>/dev/null', $pid)));
+
+  return $out !== '' ? TRUE : NULL;
+}
+
+/**
  * Stop the dev webserver started by .devtools/start.
  *
  * Prefers the pidfile written at start time, falling back to whatever is
@@ -277,7 +378,9 @@ function stop_webserver(string $port): void {
   }
 
   $targets = array_filter(array_unique($candidates), function (int $pid): bool {
-    $command = trim((string) @shell_exec(sprintf('ps -p %d -o command= 2>/dev/null', $pid)));
+    $command = process_command($pid);
+    // An unreadable command line means "do not touch": better to leave our
+    // own server running than to signal a process we could not identify.
     return $command !== '' && str_contains($command, 'php') && str_contains($command, '-S');
   });
   if ($targets === []) {
