@@ -55,6 +55,32 @@ if ($xdebug_enabled) {
 TASK('Stopping previously started services, if any.');
 stop_webserver($webserver_port);
 
+// stop_webserver only kills `php -S` processes, which is right: it must
+// not shoot at whatever else happens to hold the port. So check here,
+// after it has cleared our own server away, and refuse rather than start
+// a server that cannot bind. A killed server can take a moment to release
+// the port, so the port gets a short grace period before it counts as
+// somebody else's.
+TASK('Checking that the webserver port is free.');
+$free = FALSE;
+for ($i = 0; $i < 6; $i++) {
+  if (!port_is_open($webserver_host, $webserver_port)) {
+    $free = TRUE;
+    break;
+  }
+  usleep(500000);
+}
+if (!$free) {
+  $holder = port_holder($webserver_port);
+  FAIL(
+    'Port %s is already in use by another process%s.' . "\n"
+    . 'Stop it, or set WEBSERVER_PORT to a free port.',
+    $webserver_port,
+    $holder !== '' ? ' (' . $holder . ')' : ''
+  );
+}
+PASS('Port %s is free.', $webserver_port);
+
 TASK('Starting the PHP webserver (docroot: web/).');
 NOTE('Waiting up to %s seconds for the server to be ready.', (string) $webserver_wait_timeout);
 $cwd = (string) getcwd();
@@ -75,14 +101,25 @@ passthru(sprintf(
 ));
 
 $ready = FALSE;
+$died = FALSE;
 for ($i = 0; $i < $webserver_wait_timeout; $i++) {
   sleep(1);
   // Liveness: a cold first start (fresh site, no opcache) can take a
   // while - dots show the script is waiting, not hung.
   echo '.';
-  $fp = @fsockopen($webserver_host, (int) $webserver_port, $errno, $errstr, 1);
-  if ($fp !== FALSE) {
-    fclose($fp);
+
+  // The process we launched, not the port, is the thing being waited on.
+  // A dead pid means the bind failed (or PHP exited), and there is nothing
+  // left to wait for: stop now and print why. Only an explicit FALSE counts;
+  // NULL means the check could not tell, and an undeterminable liveness must
+  // fall through to the port probe rather than abort a healthy start.
+  $pid = (int) trim((string) @file_get_contents(server_pid_file()));
+  if ($pid > 0 && pid_is_running($pid) === FALSE) {
+    $died = TRUE;
+    break;
+  }
+
+  if (port_is_open($webserver_host, $webserver_port, 1)) {
     $ready = TRUE;
     break;
   }
@@ -90,7 +127,13 @@ for ($i = 0; $i < $webserver_wait_timeout; $i++) {
 echo PHP_EOL;
 if (!$ready) {
   $log = @file_get_contents('/tmp/quickstart-drupal-php-server.log') ?: '';
-  FAIL('Unable to start inbuilt PHP server' . ($log !== '' ? "\n" . $log : ''));
+  // '%s' as the format, not the message: a server log can contain a
+  // literal % and sprintf would choke on it.
+  FAIL(
+    '%s',
+    ($died ? 'The PHP server exited before it accepted a connection.' : 'Unable to start inbuilt PHP server')
+    . ($log !== '' ? "\n" . $log : '')
+  );
 }
 PASS('Server started successfully.');
 
