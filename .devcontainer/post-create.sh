@@ -62,6 +62,21 @@ php -r "exit(extension_loaded('gd') ? 0 : 1);" || { echo "gd extension failed to
 echo "==> Trusting this repo's mise.toml"
 mise trust
 
+echo "==> Generating the English locales hosts commonly send over SSH"
+# OpenSSH forwards the host's LANG and LC_*, and bash warns on every start
+# when that locale is not generated here. This covers the usual English
+# ones before the shell starts; shell-init.sh falls back for anything else.
+sudo apt-get install -y locales > /dev/null
+sudo sed -i -E 's/^# (en_(AU|CA|GB|IE|NZ|US)\.UTF-8 UTF-8)/\1/' /etc/locale.gen
+sudo locale-gen > /dev/null
+
+echo "==> Installing the shell locale fallback and welcome"
+# Sourced from ~/.bashrc rather than run once here, so every new terminal
+# gets the locale fix and the summary, not only the creation log.
+if ! grep -qF '.devcontainer/shell-init.sh' ~/.bashrc; then
+  printf '\n# Dev container shell setup: locale fallback and welcome.\nexport WORKSPACE_ROOT=%q\n[ -f "$WORKSPACE_ROOT/.devcontainer/shell-init.sh" ] && . "$WORKSPACE_ROOT/.devcontainer/shell-init.sh"\n' "$PWD" >> ~/.bashrc
+fi
+
 echo "==> Running npm install (triggers the full setup pipeline)"
 # --loglevel=error: the root devDependencies are lint tooling that
 # requires Node 22 (CI runs them there); installing them under the
