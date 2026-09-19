@@ -24,7 +24,7 @@ cache:
   # tools themselves need it: cspell requires >=22.18.0, markdownlint-cli2
   # >=22, commitlint >=22.12.0. This template only runs root-level
   # tooling, never touches the app's own runtime.
-  image: node:22
+  image: node:22.23.2
   cache:
     key:
       files:
@@ -201,7 +201,7 @@ lint:vale:
     - vale README.md
 
 .php-node-setup:
-  image: php:8.4
+  image: php:8.5
   before_script:
     - apt-get update -yqq
     - apt-get install -yqq $PHP_APT_PACKAGES python3 python3-setuptools build-essential
@@ -253,7 +253,7 @@ test_unit:
 # and node:assert, so they run on a modern Node with nothing installed.
 test_scripts:
   stage: test
-  image: node:22
+  image: node:22.23.2
   needs: []
   script:
     - npm run test:scripts:coverage
@@ -440,7 +440,7 @@ test_consumer_install:
   extends: .php-node-setup
   # The documented minimum, so a pass means the lock and the provisioning
   # actually work there - not just on a newer PHP.
-  image: php:8.3
+  image: php:8.5
   stage: test
   needs: []
   script:
@@ -456,7 +456,7 @@ test_consumer_install:
 # fail loudly, and a too-old PHP must be rejected by the preflight.
 test_install_guardrails:
   stage: test
-  image: node:22
+  image: node:22.23.2
   needs: []
   script:
     # npm install without PHP: exits 0 and points at `npm run setup`.
