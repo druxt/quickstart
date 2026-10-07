@@ -91,7 +91,9 @@ PASS('Content types applied.');
 TASK('Enabling the druxt module.');
 drush('pm:enable druxt');
 drush('role:perm:add anonymous %s', 'access druxt resources');
-PASS('druxt enabled; anonymous can access Druxt resources.');
+// Druxt's server cache keeps anonymous responses only as long as this allows.
+drush('config:set system.performance cache.page.max_age %s', '60');
+PASS('druxt enabled; anonymous can access Druxt resources, cached for 60 seconds.');
 
 TASK('Enabling and configuring simple_oauth.');
 drush('pm:enable simple_oauth');
