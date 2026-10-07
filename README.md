@@ -224,6 +224,12 @@ Your environment contains a pre-installed, pre-configured and running instance o
 
 In a Development Container (VS Code, Codespaces, DevPod), forwarded ports are accessible via your editor's **Ports** panel, or Codespaces' own URL pattern for forwarded ports.
 
+### Caching
+
+`npm run start` serves a production build, which keeps the JSON:API index and menus for 60 seconds, the page cache max-age Drupal is installed with. Displays changed in Drupal show after the next cache clear, without a rebuild. `npm run dev` caches nothing.
+
+To clear the cache when content changes, set `DRUXT_CACHE_SECRET` in `.env` and have Drupal send `POST /_druxt/cache/clear` with the secret in an `X-Druxt-Secret` header. The [druxt README](https://github.com/druxt/druxt.js/tree/HEAD/packages/druxt#clearing-from-drupal-with-purge) shows the Purge setup.
+
 ## Services
 
 | Port   | Service                                                                               |
