@@ -49,6 +49,9 @@ drush -r "$DRUPAL_ROOT" -y pm:enable druxt
 # Allow the anonymous user read only access to required Druxt resources.
 drush -r "$DRUPAL_ROOT" role:perm:add anonymous "access druxt resources"
 
+# Druxt's server cache keeps anonymous responses only as long as this allows.
+drush -r "$DRUPAL_ROOT" -y config:set system.performance cache.page.max_age 60
+
 # Enable the Simple OAuth module for authentication.
 drush -r "$DRUPAL_ROOT" -y pm:enable simple_oauth
 
