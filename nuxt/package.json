@@ -32,7 +32,7 @@
     "dotenv": "^17.4.2",
     "druxt-auth": "^0.5.1",
     "druxt-site": "^0.15.0",
-    "nuxt": "2.15.8",
+    "nuxt": "4.6.0",
     "vue-server-renderer": "^2.7.14",
     "vue-template-compiler": "^2.7.14"
   },
