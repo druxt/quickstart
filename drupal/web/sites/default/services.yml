@@ -186,5 +186,8 @@ parameters:
     exposedHeaders: false
     # Sets the Access-Control-Max-Age header.
     maxAge: false
-    # Sets the Access-Control-Allow-Credentials header.
-    supportsCredentials: true
+    # Sets the Access-Control-Allow-Credentials header. Off, as sign-in uses
+    # OAuth bearer tokens. With `*` as the allowed origin, turning it on makes
+    # every response vary by Origin, and Druxt's server cache keeps none of
+    # them; a single named origin can have it on and still be cached.
+    supportsCredentials: false

@@ -1,31 +1,58 @@
 <template>
   <div>
+    <!-- Each region carries the class Drupal's Olivero theme gives it. Druxt
+         keeps its own data out of the markup, so a class is what a
+         stylesheet or a test can rely on. -->
     <div>
-      <slot name="header" />
+      <div v-if="$scopedSlots.header" class="region region--header">
+        <slot name="header" />
+      </div>
       <nav>
-        <slot name="primary_menu" />
-        <slot name="secondary_menu" />
+        <div v-if="$scopedSlots.primary_menu" class="region region--primary-menu">
+          <slot name="primary_menu" />
+        </div>
+        <div v-if="$scopedSlots.secondary_menu" class="region region--secondary-menu">
+          <slot name="secondary_menu" />
+        </div>
       </nav>
     </div>
-    <slot name="hero" />
+    <div v-if="$scopedSlots.hero" class="region region--hero">
+      <slot name="hero" />
+    </div>
     <main>
-      <slot name="highlighted" />
-      <slot name="breadcrumb" />
+      <div v-if="$scopedSlots.highlighted" class="region region--highlighted">
+        <slot name="highlighted" />
+      </div>
+      <div v-if="$scopedSlots.breadcrumb" class="region region--breadcrumb">
+        <slot name="breadcrumb" />
+      </div>
       <div>
         <header>
-          <slot name="content_above" />
+          <div v-if="$scopedSlots.content_above" class="region region--content-above">
+            <slot name="content_above" />
+          </div>
         </header>
-        <slot name="content" />
-        <aside v-if="$scopedSlots['sidebar']">
+        <div v-if="$scopedSlots.content" class="region region--content">
+          <slot name="content" />
+        </div>
+        <aside v-if="$scopedSlots.sidebar" class="region region--sidebar">
           <slot name="sidebar" />
         </aside>
       </div>
-      <slot name="content_below" />
-      <slot name="social_bar" />
+      <div v-if="$scopedSlots.content_below" class="region region--content-below">
+        <slot name="content_below" />
+      </div>
+      <div v-if="$scopedSlots.social_bar" class="region region--social-bar">
+        <slot name="social_bar" />
+      </div>
     </main>
     <footer>
-      <slot name="footer_top" />
-      <slot name="footer_bottom" />
+      <div v-if="$scopedSlots.footer_top" class="region region--footer-top">
+        <slot name="footer_top" />
+      </div>
+      <div v-if="$scopedSlots.footer_bottom" class="region region--footer-bottom">
+        <slot name="footer_bottom" />
+      </div>
     </footer>
   </div>
 </template>

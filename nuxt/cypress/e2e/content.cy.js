@@ -40,7 +40,7 @@ it('Article page', () => {
   // Expect the entity's body to render inside the page's content region -
   // proof that a real Drupal entity survives the full JSON:API ->
   // DruxtRouter -> DruxtEntity round trip.
-  cy.get('div[blocks][name="content"]')
+  cy.get('.region--content')
     .should('exist')
     .should('contain.text', 'Seeded by .devtools/seed-test-content')
 })

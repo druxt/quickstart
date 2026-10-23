@@ -81,6 +81,16 @@ export default {
     // Set the JSON:API endpoint, `/jsonapi` by default.
     // endpoint: '/jsonapi'
 
+    // Server cache; https://druxtjs.org/modules/druxt
+    // In production the server keeps the JSON:API index and menus for as long
+    // as Drupal's page cache max-age allows. It is off under `nuxt dev`, and
+    // `cache: false` turns it off everywhere.
+    cache: {
+      // Turns on `POST /_druxt/cache/clear`, for Drupal to call when content
+      // changes. Send the secret in an `X-Druxt-Secret` header.
+      secret: process.env.DRUXT_CACHE_SECRET
+    },
+
     // DruxtEntity module settings; https://druxtjs.org/modules/entity
     entity: {
       // Disable the deprecated DruxtField components.
@@ -121,6 +131,14 @@ export default {
       // DruxtSite module. This allows more fine grained control over your
       // routing.
       // wildcard: false
+    },
+
+    // DruxtSchema module settings; https://druxtjs.org/modules/schema
+    schema: {
+      // Regenerate a schema on the Nuxt server when a page first needs it, so
+      // a display changed in Drupal shows without a rebuild. Held until the
+      // next cache clear; under `nuxt dev` every request regenerates.
+      refresh: true
     },
 
     // DruxtSite module settings; https://druxtjs.org/modules/site
