@@ -45,6 +45,7 @@ nuxtjs
 nvmrc
 Olivero
 opcache
+opencode
 openssl
 openvscode
 phpsab
