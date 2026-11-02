@@ -17,6 +17,11 @@ While it does, the usual 0.x reading applies:
 
 ## [Unreleased]
 
+### Added
+
+- AI tools connect to the read-only Druxt docs server, through `AGENTS.md` and each
+  tool's MCP config.
+
 ### Security
 
 - Drupal core 11.4.11, and Simple OAuth 6.1.3 for SA-CONTRIB-2026-242.
