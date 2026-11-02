@@ -20,8 +20,8 @@
         "drupal/core-composer-scaffold": "~11",
         "drupal/core-project-message": "~11",
         "drupal/core-recommended": "~11",
-        "drupal/decoupled_router": "^2.0 <2.0.7",
-        "drupal/druxt": "^1.2",
+        "drupal/decoupled_router": "^2.0",
+        "drupal/druxt": "^1.3.1",
         "drupal/simple_oauth": "^6",
         "drush/drush": "^13",
         "vlucas/phpdotenv": "^5.5"
@@ -95,7 +95,7 @@
             ],
             "post-create-project-cmd-message": [
                 "<bg=blue;fg=white>                                                         </>",
-                "<bg=blue;fg=white>  Congratulations, you\u2019ve installed the Drupal codebase  </>",
+                "<bg=blue;fg=white>  Congratulations, you’ve installed the Drupal codebase  </>",
                 "<bg=blue;fg=white>  from the drupal/recommended-project template!          </>",
                 "<bg=blue;fg=white>                                                         </>",
                 "",
@@ -108,11 +108,6 @@
                 "  * Remove the plugin that prints this message:",
                 "      composer remove drupal/core-project-message"
             ]
-        },
-        "patches": {
-            "drupal/druxt": {
-                "Fix ViewsPathTranslatorSubscriber crash on views with no JSON:API route": "patches/druxt-views-path-translator-route-name.patch"
-            }
         }
     }
 }

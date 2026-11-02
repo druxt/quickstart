@@ -17,6 +17,14 @@ While it does, the usual 0.x reading applies:
 
 ## [Unreleased]
 
+### Security
+
+- Drupal core 11.4.11, and Simple OAuth 6.1.3 for SA-CONTRIB-2026-242.
+
+### Changed
+
+- The latest Druxt: `druxt` 0.25.1 and `drupal/druxt` 1.3.1, without the `decoupled_router` hold or the local patch, which 1.3.1 no longer needs.
+
 ### Fixed
 
 - `npm run build` works on Node 17 or newer, as the other scripts already do.
