@@ -121,11 +121,11 @@ export default {
 
     // DruxtRouter module settings; https://druxtjs.org/modules/router
     router: {
-      // Experimental; Disable the DruxtRouter page middleware, removing routing
-      // requests and server side redirects. Doing this allows Full Static
-      // builds without the need of a live Drupal backend. The Route is still
-      // is retrieved by the fetch hook instead.
-      middleware: false
+      // The DruxtRouter page middleware resolves the route before the page
+      // renders, so a missing path answers 404 and the page title is in the
+      // server's HTML. Experimental: set it to false for Full Static builds
+      // without a live Drupal backend, and the fetch hook gets the route instead.
+      middleware: true
 
       // Disable the wildcard router, which is enabled by default in the
       // DruxtSite module. This allows more fine grained control over your
