@@ -46,6 +46,6 @@ make reset   # wipe the database and stop the server
 | --- | --- | --- |
 | `WEBSERVER_HOST` | `127.0.0.1` | PHP server bind host |
 | `WEBSERVER_PORT` | auto-discovered (8888+) | PHP server port |
-| `DB_FILE` | `/tmp/quickstart-drupal-site.sqlite` | SQLite database path |
+| `DB_FILE` | A file per checkout in the temp directory, written to `.env` | SQLite database path |
 | `OAUTH_CALLBACK` | `http://localhost:3000/callback` | OAuth Consumer redirect URL |
 | `XDEBUG` | unset | Set to any value to enable Xdebug |
