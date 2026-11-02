@@ -15,6 +15,12 @@ While it does, the usual 0.x reading applies:
 - **Patch** - fixes and dependency updates that leave the documented
   setup alone.
 
+## [Unreleased]
+
+### Fixed
+
+- A missing path answers 404, not 200 with an error page, and the page title is in the server's HTML.
+
 ## 0.3.0 (2026-08-20)
 
 A full modernization: Drupal 11, a local backend that needs no Docker,
