@@ -18,9 +18,10 @@ async function main() {
   await ensureBackend()
   ensureOauthClientId()
 
-  // `nuxt start` needs the server bundle from a production build; a dev
-  // server's .nuxt/ (no dist/server) must not fool this check.
-  if (!fs.existsSync(path.join(NUXT_DIR, '.nuxt', 'dist', 'server'))) {
+  // `nuxt start` needs the server bundle from a production build. A dev
+  // server's .nuxt/ has no dist/server, and a failed build leaves it empty, so
+  // neither may fool this check.
+  if (!fs.existsSync(path.join(NUXT_DIR, '.nuxt', 'dist', 'server', 'server.js'))) {
     console.log('No production build found - building the frontend first...')
     console.log('')
     runNpm(['run', 'build'], { cwd: NUXT_DIR })
