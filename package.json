@@ -7,7 +7,7 @@
   "scripts": {
     "setup": "node scripts/setup.mjs",
     "dev": "node scripts/dev.mjs",
-    "build": "npm --prefix nuxt run build",
+    "build": "node scripts/build.mjs",
     "start": "node scripts/start.mjs",
     "stop": "node scripts/stop.mjs",
     "assemble": "node scripts/devtools.mjs assemble",

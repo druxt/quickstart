@@ -15,6 +15,14 @@ While it does, the usual 0.x reading applies:
 - **Patch** - fixes and dependency updates that leave the documented
   setup alone.
 
+## [Unreleased]
+
+### Fixed
+
+- `npm run build` works on Node 17 or newer, as the other scripts already do.
+- `npm run start` builds again after a failed build, instead of stopping with
+  `No build files found`.
+
 ## 0.3.0 (2026-08-20)
 
 A full modernization: Drupal 11, a local backend that needs no Docker,
