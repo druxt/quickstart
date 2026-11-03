@@ -35,6 +35,7 @@ libsqlite
 libxss
 libxtst
 libzip
+llms
 lndo
 makedirs
 mbstring
