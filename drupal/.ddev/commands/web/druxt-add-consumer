@@ -60,6 +60,10 @@ $consumer = \Drupal\consumers\Entity\Consumer::create([
   // no scope (or an empty one, as druxt-auth does) resolves to this
   // rather than being rejected.
   "authorization_code_scopes" => [$scope_id],
+  // druxt-auth's /user/login form signs the visitor in on the frontend.
+  // Without this, Drupal answers its /oauth/authorize step with the
+  // consent page, and the visitor leaves the site to approve the app.
+  "automatic_authorization" => TRUE,
   // Multi-value on purpose. The browser builds redirect_uri from its own
   // origin, and an IDE forwarding container port 3000 lands on the next
   // free HOST port (3001, 3002, ...) when 3000 is taken - league then
@@ -85,5 +89,11 @@ if ($violations->count() > 0) {
   throw new \RuntimeException("Refusing to save an invalid Consumer - " . implode("; ", $messages));
 }
 $consumer->save();
+// Read it back: an unknown or ignored field saves without complaint, and
+// the visitor would only find out at the consent page.
+$saved = \Drupal::entityTypeManager()->getStorage("consumer")->loadUnchanged($consumer->id());
+if (!$saved->get("automatic_authorization")->value) {
+  throw new \RuntimeException("The Consumer was saved without automatic_authorization - druxt-auth's sign-in form would stop at Drupal's consent page.");
+}
 echo "\nOAUTH_CLIENT_ID=" . $consumer->getClientId() . "\n\n";
 '
