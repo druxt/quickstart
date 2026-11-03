@@ -30,6 +30,19 @@ While it does, the usual 0.x reading applies:
 - `npm run build` works on Node 17 or newer, as the other scripts already do.
 - `npm run start` builds again after a failed build, instead of stopping with
   `No build files found`.
+- `npm install` no longer needs Python. `vue-jest` 3 depends on
+  `deasync`, a native module, so installing the frontend ran
+  `node-gyp`, and the `node-gyp` bundled with Node 16's npm imports
+  `distutils`, which Python 3.12 removed. The documented one-liner died
+  partway through on any machine without `setuptools`, which is the
+  stock state of Ubuntu 24.04, Debian 13 and Fedora 40, so the affected
+  group grows rather than shrinks. Nothing at runtime needed it: it was
+  the transform for `.vue` files under test. That is now
+  `@vue/vue2-jest` 29, the maintained package from the same project,
+  matching the installed Jest and building nothing. `deasync` is the
+  only dependency here that needed a compiler, so the frontend install
+  no longer depends on the machine's Python at all, and a test pins the
+  set of packages allowed to run an install script.
 
 ## 0.3.0 (2026-08-20)
 

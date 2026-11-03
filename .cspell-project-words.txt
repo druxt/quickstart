@@ -7,7 +7,9 @@ cweagans
 davidanson
 dbaeumer
 ddev
+demi
 devpod
+distutils
 docroot
 drush
 druxt
@@ -17,6 +19,7 @@ extensionless
 gdlib
 giget
 hverlin
+inbrowser
 instantiator
 intelephense
 interruptible
