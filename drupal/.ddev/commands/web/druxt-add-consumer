@@ -60,7 +60,7 @@ $consumer = \Drupal\consumers\Entity\Consumer::create([
   // no scope (or an empty one, as druxt-auth does) resolves to this
   // rather than being rejected.
   "authorization_code_scopes" => [$scope_id],
-  // druxt-auth's /user/login form signs the visitor in on the frontend.
+  // The /user/login form from druxt-auth signs the visitor in on the frontend.
   // Without this, Drupal answers its /oauth/authorize step with the
   // consent page, and the visitor leaves the site to approve the app.
   "automatic_authorization" => TRUE,
@@ -93,7 +93,7 @@ $consumer->save();
 // the visitor would only find out at the consent page.
 $saved = \Drupal::entityTypeManager()->getStorage("consumer")->loadUnchanged($consumer->id());
 if (!$saved->get("automatic_authorization")->value) {
-  throw new \RuntimeException("The Consumer was saved without automatic_authorization - druxt-auth's sign-in form would stop at Drupal's consent page.");
+  throw new \RuntimeException("The Consumer was saved without automatic_authorization - the druxt-auth sign-in form would stop at the Drupal consent page.");
 }
 echo "\nOAUTH_CLIENT_ID=" . $consumer->getClientId() . "\n\n";
 '
