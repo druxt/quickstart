@@ -24,6 +24,12 @@ While it does, the usual 0.x reading applies:
 ### Changed
 
 - The latest Druxt: `druxt` 0.25.1 and `drupal/druxt` 1.3.1, without the `decoupled_router` hold or the local patch, which 1.3.1 no longer needs.
+- `/user/login` is `druxt-auth`'s sign-in form, which signs a visitor in on
+  the site instead of sending them to Drupal's login and consent pages.
+  The quickstart's own redirect page is gone, and the OAuth consumer now
+  authorizes the frontend automatically. On a site set up before this,
+  edit the Druxt consumer at `/admin/config/services/consumer` and tick
+  **Automatic authorization**.
 
 ### Fixed
 
