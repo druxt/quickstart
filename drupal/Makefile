@@ -2,7 +2,6 @@ SHELL=/bin/bash
 
 WEBSERVER_HOST ?= 127.0.0.1
 WEBSERVER_PORT ?= 8888
-DB_FILE ?= /tmp/quickstart-drupal-site.sqlite
 # Recipes read these from the environment (.devtools/*) - a plain
 # `make start WEBSERVER_PORT=9000` sets only the Make variable otherwise.
 export WEBSERVER_HOST WEBSERVER_PORT DB_FILE
@@ -70,6 +69,7 @@ login:
 delete destroy: reset
 
 reset: stop
-	rm -f "$(DB_FILE)" /tmp/quickstart-drupal-php-server.log /tmp/quickstart-drupal-php-server.pid > /dev/null 2>&1 || true
+	db="$${DB_FILE:-$$(sed -n 's/^DB_FILE=//p' ../.env 2>/dev/null)}"; if [ -n "$$db" ]; then rm -f "$$db"; fi
+	rm -f /tmp/quickstart-drupal-php-server.log /tmp/quickstart-drupal-php-server.pid > /dev/null 2>&1 || true
 
 .DEFAULT_GOAL := build

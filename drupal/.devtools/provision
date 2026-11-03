@@ -32,7 +32,12 @@ require_once __DIR__ . '/helpers.php';
 // Variables.
 // -----------------------------------------------------------------------------
 
-$db_file = resolve_env_value('DB_FILE', '/tmp/quickstart-drupal-site.sqlite')[0];
+// A database of its own for each checkout, or a second one would overwrite the
+// first. Kept in .env, which the other scripts read it from.
+[$db_file, $db_file_source] = resolve_env_value('DB_FILE', sys_get_temp_dir() . '/quickstart-drupal-site-' . substr(md5(dirname(getcwd())), 0, 8) . '.sqlite');
+if ($db_file_source === 'default') {
+  dotenv_write_var('DB_FILE', $db_file);
+}
 $oauth_callback = resolve_env_value('OAUTH_CALLBACK', 'http://localhost:3000/callback')[0];
 
 // -----------------------------------------------------------------------------

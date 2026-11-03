@@ -43,6 +43,7 @@ While it does, the usual 0.x reading applies:
   only dependency here that needed a compiler, so the frontend install
   no longer depends on the machine's Python at all, and a test pins the
   set of packages allowed to run an install script.
+- Each checkout gets its own SQLite database, so a second one can't overwrite the first.
 
 ## 0.3.0 (2026-08-20)
 
