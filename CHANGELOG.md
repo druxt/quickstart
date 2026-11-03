@@ -30,6 +30,11 @@ While it does, the usual 0.x reading applies:
 - `npm run build` works on Node 17 or newer, as the other scripts already do.
 - `npm run start` builds again after a failed build, instead of stopping with
   `No build files found`.
+- Editors can log in. The OAuth scope maps to the authenticated role, but
+  provisioning never gave that role `grant simple_oauth codes` or
+  `access druxt resources`, so the consent screen refused every account
+  but the admin, which bypasses both checks. Both `npm run setup` and the
+  DDEV install now grant them, and provisioning checks they took.
 - `npm install` no longer needs Python. `vue-jest` 3 depends on
   `deasync`, a native module, so installing the frontend ran
   `node-gyp`, and the `node-gyp` bundled with Node 16's npm imports
