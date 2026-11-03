@@ -10,6 +10,9 @@ module.exports = {
     '^.+\\.js$': 'babel-jest',
     '.*\\.(vue)$': '@vue/vue2-jest',
   },
+  // Druxt publishes its components as .vue files, so a component that extends
+  // DruxtModule only loads if Jest transforms them too.
+  transformIgnorePatterns: ['/node_modules/(?!druxt)'],
   collectCoverage: true,
   collectCoverageFrom: [
     '<rootDir>/components/**/*.vue',

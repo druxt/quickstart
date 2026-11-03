@@ -35,6 +35,10 @@ While it does, the usual 0.x reading applies:
   `access druxt resources`, so the consent screen refused every account
   but the admin, which bypasses both checks. Both `npm run setup` and the
   DDEV install now grant them, and provisioning checks they took.
+- A component that extends `DruxtModule` can be tested. Druxt publishes its
+  components as `.vue` files with ES imports, which Jest skipped because they
+  sit in `node_modules`, so such a test failed to load. Jest now transforms
+  Druxt's files, and the Babel config is project-wide, so it reaches them.
 - `npm install` no longer needs Python. `vue-jest` 3 depends on
   `deasync`, a native module, so installing the frontend ran
   `node-gyp`, and the `node-gyp` bundled with Node 16's npm imports
