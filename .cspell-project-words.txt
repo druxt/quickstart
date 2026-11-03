@@ -38,6 +38,7 @@ libsqlite
 libxss
 libxtst
 libzip
+llms
 lndo
 makedirs
 mbstring
@@ -48,6 +49,7 @@ nuxtjs
 nvmrc
 Olivero
 opcache
+opencode
 openssl
 openvscode
 phpsab

@@ -106,6 +106,7 @@ dist
 !.vscode/launch.json
 # VSCode recommended extensions
 !.vscode/extensions.json
+!.vscode/mcp.json
 
 # Intellij idea
 *.iml

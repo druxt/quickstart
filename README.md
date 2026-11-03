@@ -286,6 +286,15 @@ Druxt integrates with the Nuxt Storybook module to provide zero-configuration, a
 
 To start Storybook, navigate to the `nuxt` directory and run `npx nuxt storybook`.
 
+### AI tools
+
+`.mcp.json`, `.vscode/mcp.json`, `.cursor/mcp.json` and `opencode.json` connect
+Claude Code, VS Code, Cursor and OpenCode to the read-only
+[Druxt docs server](https://druxtjs.org/mcp), and `AGENTS.md` sends tools without
+MCP support to [`llms.txt`](https://druxtjs.org/llms.txt). Your tool may ask you to
+approve the server first. It doesn't need credentials and can't
+see your site. To remove it, delete those files, or the `druxt` entry in each.
+
 ## License
 
 [MIT](https://github.com/druxt/druxt.js/blob/develop/LICENSE)
