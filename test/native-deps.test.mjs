@@ -16,6 +16,7 @@
 
 import assert from 'node:assert/strict'
 import fs from 'node:fs'
+import { createRequire } from 'node:module'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, it } from 'node:test'
@@ -83,5 +84,17 @@ describe('frontend install scripts', () => {
       '@vue/vue2-jest is the maintained transform for Vue 2 and Jest 29.'
     )
     assert.ok(!devDependencies['vue-jest'], 'vue-jest 3 is unmaintained and depends on deasync.')
+    // The manifest alone passes with a config still pointing at vue-jest.
+    const { transform = {} } = createRequire(import.meta.url)(
+      path.join(REPO, 'nuxt', 'jest.config.js')
+    )
+    const vue = Object.entries(transform).filter(([pattern]) =>
+      new RegExp(pattern).test('Example.vue')
+    )
+    assert.deepEqual(
+      vue.map(([, transformer]) => transformer),
+      ['@vue/vue2-jest'],
+      'nuxt/jest.config.js has to transform .vue files with @vue/vue2-jest.'
+    )
   })
 })
