@@ -334,6 +334,89 @@ jobs:
         working-directory: /tmp/site/nuxt
         run: npm run build
 
+  # `.devtools/start` must never report a server it did not start. Needs
+  # PHP and the scripts, nothing else: both cases fail before Drupal is
+  # touched, so this job skips assemble and provision entirely.
+  test_start_guardrails:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+
+      # The readiness probe used to connect to the port and accept any
+      # answer, so a stranger holding it read as a healthy start: BASE_URL
+      # was written and a login link printed for a site never started.
+      - name: A port held by another process is refused
+        working-directory: drupal
+        run: |
+          python3 -m http.server 8899 --bind 127.0.0.1 >/dev/null 2>&1 &
+          squatter=$!
+          trap 'kill "$squatter" 2>/dev/null || true' EXIT
+          until curl -sf -o /dev/null http://127.0.0.1:8899/; do sleep 1; done
+          if WEBSERVER_PORT=8899 .devtools/start > /tmp/squatted.log 2>&1; then
+            echo 'start reported success against a port it never bound' >&2
+            cat /tmp/squatted.log >&2
+            exit 1
+          fi
+          grep -q 'already in use by another process' /tmp/squatted.log
+          test ! -f ../.env
+          # A guard that clears the port by killing whatever holds it is
+          # not a guard. stop_webserver only targets `php -S`, and this
+          # is what pins that.
+          kill -0 "$squatter" 2>/dev/null || {
+            echo 'start killed a process it did not start' >&2
+            exit 1
+          }
+
+      # The gitlab CI image has no procps, and the first version of this
+      # guard shelled out to `ps` for both liveness and identity: it reported
+      # a healthy server as exited and could not recognise its own process to
+      # stop it. This runner does have `ps`, so the guard passed here while
+      # failing there. Hiding `ps` is what makes that case reachable.
+      - name: The guard works on an image without procps
+        working-directory: drupal
+        run: |
+          shim=$(mktemp -d)
+          printf '#!/bin/sh\nexit 127\n' > "$shim/ps"
+          chmod +x "$shim/ps"
+          python3 -m http.server 8908 --bind 127.0.0.1 >/dev/null 2>&1 &
+          squatter=$!
+          trap 'kill "$squatter" 2>/dev/null || true' EXIT
+          until curl -sf -o /dev/null http://127.0.0.1:8908/; do sleep 1; done
+          if PATH="$shim:$PATH" WEBSERVER_PORT=8908 .devtools/start > /tmp/no-procps.log 2>&1; then
+            echo 'start reported success against a squatted port with no ps' >&2
+            cat /tmp/no-procps.log >&2
+            exit 1
+          fi
+          grep -q 'already in use by another process' /tmp/no-procps.log
+          # /proc gives the command line, so the holder is still named.
+          grep -q 'http.server 8908' /tmp/no-procps.log
+          kill -0 "$squatter" 2>/dev/null || {
+            echo 'start killed a process it did not start' >&2
+            exit 1
+          }
+
+      # Second net, for a bind that fails with the port free: the wait
+      # watches the process it launched, not the port, so it reports the
+      # reason instead of timing out on a server that is already gone.
+      - name: A failed bind is reported, not waited out
+        working-directory: drupal
+        run: |
+          if WEBSERVER_HOST=203.0.113.1 WEBSERVER_PORT=8901 WEBSERVER_WAIT_TIMEOUT=20 \
+            .devtools/start > /tmp/bind-failure.log 2>&1; then
+            echo 'start reported success for a server that never bound' >&2
+            cat /tmp/bind-failure.log >&2
+            exit 1
+          fi
+          grep -q 'exited before it accepted a connection' /tmp/bind-failure.log
+          grep -q 'Cannot assign requested address' /tmp/bind-failure.log
+
   # What the root install promises on machines without a working PHP: a
   # consumer's `npm install` must never fail, `npm run setup` must
   # fail loudly, and a too-old PHP must be rejected by the preflight.
