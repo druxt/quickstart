@@ -55,6 +55,12 @@ drush -r "$DRUPAL_ROOT" -y config:set system.performance cache.page.max_age 60
 # Enable the Simple OAuth module for authentication.
 drush -r "$DRUPAL_ROOT" -y pm:enable simple_oauth
 
+# druxt-add-consumer maps its scope to authenticated, so editors need both
+# of these to log in. Without the first the consent form refuses them; the
+# second isn't inherited from anonymous. User 1 bypasses both checks.
+drush -r "$DRUPAL_ROOT" role:perm:add authenticated "grant simple_oauth codes"
+drush -r "$DRUPAL_ROOT" role:perm:add authenticated "access druxt resources"
+
 # Keys live at the project root, NOT under the docroot: the config
 # values below are Drupal-side paths resolved relative to web/, so
 # ../keys from there is this directory.

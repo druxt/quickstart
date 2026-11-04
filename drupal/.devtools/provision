@@ -196,6 +196,30 @@ PHP);
 dotenv_write_var('OAUTH_CLIENT_ID', $client_id);
 PASS('Consumer created (client ID %s); OAUTH_CLIENT_ID written to ../.env.', $client_id);
 
+TASK('Granting editors the permissions a login needs.');
+// The scope above maps to authenticated, so that role needs both. Without
+// 'grant simple_oauth codes', simple_oauth refuses the consent form and the
+// authorize step returns to itself with "The 'grant simple_oauth codes'
+// permission is required." Without 'access druxt resources', a signed-in
+// editor can't read the Druxt resources anonymous visitors can, since the
+// authenticated role doesn't inherit anonymous permissions. User 1 bypasses
+// permission checks, which is why a site provisioned without them still logs
+// in as admin while every real account fails.
+foreach (['grant simple_oauth codes', 'access druxt resources'] as $permission) {
+  drush('role:perm:add authenticated %s', $permission);
+}
+// Read them back. This is the same class of silent failure as the consumer's
+// empty client_id: everything else works, and only login breaks.
+drush('php-eval %s', <<<'PHP'
+$role = \Drupal\user\Entity\Role::load("authenticated");
+foreach (["grant simple_oauth codes", "access druxt resources"] as $permission) {
+  if (!$role || !$role->hasPermission($permission)) {
+    throw new \RuntimeException("The authenticated role is missing '$permission', so every login but user 1 will fail.");
+  }
+}
+PHP);
+PASS('authenticated can grant OAuth2 codes and access Druxt resources.');
+
 echo PHP_EOL;
 echo '===============================' . PHP_EOL;
 echo '   🚀 PROVISION COMPLETE  ✅  ' . PHP_EOL;
