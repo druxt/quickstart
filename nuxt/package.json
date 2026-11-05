@@ -29,7 +29,7 @@
   },
   "dependencies": {
     "core-js": "3.50.0",
-    "dotenv": "^17.4.2",
+    "dotenv": "^18.0.9",
     "druxt": "^0.25.1",
     "druxt-auth": "^0.5.1",
     "druxt-blocks": "^0.18.1",
