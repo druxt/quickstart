@@ -36,7 +36,7 @@
     "druxt-entity": "^0.29.1",
     "druxt-router": "^0.32.1",
     "druxt-site": "^0.15.1",
-    "nuxt": "2.15.8",
+    "nuxt": "4.6.0",
     "vue-server-renderer": "^2.7.14",
     "vue-template-compiler": "^2.7.14"
   },
