@@ -25,6 +25,8 @@ While it does, the usual 0.x reading applies:
 ### Security
 
 - Drupal core 11.4.11, and Simple OAuth 6.1.3 for SA-CONTRIB-2026-242.
+- Simple OAuth 6.1.4 for SA-CONTRIB-2026-296, a critical access bypass, and
+  Drupal core 11.4.12 for the Symfony advisories it carries the fixes for.
 
 ### Changed
 
