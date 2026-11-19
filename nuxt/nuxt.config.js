@@ -12,6 +12,18 @@ const localhostListenURL = function () {
   })
 }
 
+// A production build compiles the auth module in or leaves it out. This
+// records the client ID a build was made with, so `npm run start` can tell a
+// build made before the ID was set, changed or removed, and make it again.
+const recordAuthClientId = function () {
+  this.nuxt.hook('build:done', () => {
+    require('fs').writeFileSync(
+      require('path').join(this.options.buildDir, 'druxt-auth-client-id'),
+      process.env.OAUTH_CLIENT_ID || ''
+    )
+  })
+}
+
 export default {
   target: process.env.NUXT_TARGET,
 
@@ -55,7 +67,8 @@ export default {
   // Modules for dev and build (recommended): https://go.nuxtjs.dev/config-modules
   buildModules: [
     // https://go.nuxtjs.dev/eslint
-    '@nuxtjs/eslint-module'
+    '@nuxtjs/eslint-module',
+    recordAuthClientId
   ],
 
   // Modules: https://go.nuxtjs.dev/config-modules
@@ -67,8 +80,14 @@ export default {
   // production. The visible symptom: client-side /jsonapi requests get
   // the app's own HTML shell back, and hydration wipes the SSR-rendered
   // menus. Matches the druxt.js monorepo's own example placement.
+  //
+  // druxt-auth is left out until .env has an OAuth consumer: it refuses to
+  // load without a client ID, and a site that only reads from Drupal has no
+  // need of one.
   modules: [
-    ['druxt-auth', { clientId: process.env.OAUTH_CLIENT_ID }],
+    ...(process.env.OAUTH_CLIENT_ID
+      ? [['druxt-auth', { clientId: process.env.OAUTH_CLIENT_ID }]]
+      : []),
     'druxt-site',
     localhostListenURL
   ],

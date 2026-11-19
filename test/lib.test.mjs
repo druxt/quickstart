@@ -19,7 +19,9 @@ import {
   backendIsProvisionedHere,
   ddevProjectHost,
   DRUPAL_DIR,
+  buildMatchesAuth,
   ensureOauthClientId,
+  oauthClientId,
   firstFreePort,
   foreground,
   foregroundNpm,
@@ -392,10 +394,43 @@ describe('printCommands', () => {
 })
 
 describe('ensureOauthClientId', () => {
-  it('passes silently once the consumer UUID is in .env', () => {
-    // The missing case exits the process, so it is asserted from a child
-    // process in guards.test.mjs instead.
-    assert.doesNotThrow(() => ensureOauthClientId({ OAUTH_CLIENT_ID: 'a-uuid' }))
+  it('says sign-in is set up once the consumer UUID is in .env', () => {
+    assert.equal(ensureOauthClientId({ OAUTH_CLIENT_ID: 'a-uuid' }, {}), true)
+  })
+
+  it('reads the client ID the way Nuxt will, with the shell over .env', () => {
+    assert.equal(oauthClientId({ OAUTH_CLIENT_ID: 'from-file' }, {}), 'from-file')
+    assert.equal(oauthClientId({}, { OAUTH_CLIENT_ID: 'from-shell' }), 'from-shell')
+    assert.equal(
+      oauthClientId({ OAUTH_CLIENT_ID: 'from-file' }, { OAUTH_CLIENT_ID: 'from-shell' }),
+      'from-shell'
+    )
+    // dotenv leaves a variable the shell has alone, an empty one included.
+    assert.equal(oauthClientId({ OAUTH_CLIENT_ID: 'from-file' }, { OAUTH_CLIENT_ID: '' }), '')
+    assert.equal(oauthClientId({}, {}), '')
+  })
+
+  it('counts a client ID the shell exports', () => {
+    assert.equal(ensureOauthClientId({}, { OAUTH_CLIENT_ID: 'from-shell' }), true)
+  })
+
+  it('tells a build made with another client ID, or with none, from the current one', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'qs-auth-'))
+    const file = path.join(dir, 'druxt-auth-client-id')
+    // No record: a build from before this was written, or no build at all.
+    assert.equal(buildMatchesAuth('a-uuid', file), false)
+    fs.writeFileSync(file, 'a-uuid')
+    assert.equal(buildMatchesAuth('a-uuid', file), true)
+    assert.equal(buildMatchesAuth('another', file), false)
+    assert.equal(buildMatchesAuth('', file), false)
+    fs.writeFileSync(file, '')
+    assert.equal(buildMatchesAuth('', file), true)
+    fs.rmSync(dir, { recursive: true, force: true })
+  })
+
+  it('says it is not, and does not stop, without one', () => {
+    // What it prints is asserted from a child process in guards.test.mjs.
+    assert.equal(ensureOauthClientId({ BASE_URL: 'https://cms.example.org' }, {}), false)
   })
 })
 

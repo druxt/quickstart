@@ -28,6 +28,9 @@ While it does, the usual 0.x reading applies:
 
 ### Changed
 
+- The site starts without `OAUTH_CLIENT_ID`. Sign-in is off until `.env` has one, and
+  `npm run dev` says how to turn it on. An existing backend that is only read from
+  needs no OAuth consumer.
 - The latest Druxt: `druxt` 0.25.1 and `drupal/druxt` 1.3.1, without the `decoupled_router` hold or the local patch, which 1.3.1 no longer needs.
 
 ### Fixed

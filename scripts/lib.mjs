@@ -409,19 +409,54 @@ export function foregroundNpm(args, opts = {}) {
  * start the .devtools PHP server when BASE_URL is loopback and down;
  * never start anything for DDEV/external backends.
  */
-export function ensureOauthClientId(env = readEnv()) {
-  if (env.OAUTH_CLIENT_ID) {
-    return
+/**
+ * The OAuth client ID Nuxt will see. nuxt.config.js loads .env with dotenv,
+ * which leaves a variable the shell already has alone, so the shell's value
+ * wins, an empty one included.
+ */
+export function oauthClientId(env = readEnv(), shell = process.env) {
+  return ('OAUTH_CLIENT_ID' in shell ? shell.OAUTH_CLIENT_ID : env.OAUTH_CLIENT_ID) || ''
+}
+
+/**
+ * The file a production build leaves behind, holding the client ID it was
+ * built with. nuxt.config.js writes it when the build is done.
+ */
+export const BUILD_AUTH_FILE = path.join(NUXT_DIR, '.nuxt', 'druxt-auth-client-id')
+
+/**
+ * Whether a production build was made with this client ID. The auth module
+ * is compiled in or left out at build time, so a build made before the ID
+ * was set, changed or removed has to be made again.
+ */
+export function buildMatchesAuth(clientId, file = BUILD_AUTH_FILE) {
+  try {
+    return fs.readFileSync(file, 'utf8') === clientId
+  } catch {
+    return false
   }
-  // Without this, Nuxt dies inside druxt-auth with "requires a clientId
-  // to be provided", which says nothing about what to do. It is empty
-  // whenever provisioning did not finish, so point at that instead.
+}
+
+/**
+ * Whether sign-in is set up, which it is once OAUTH_CLIENT_ID is set.
+ *
+ * A site without one still runs: nuxt.config.js leaves druxt-auth out, and
+ * only /user/login has nothing to do. So this says how to turn sign-in on
+ * and lets the caller carry on.
+ */
+export function ensureOauthClientId(env = readEnv(), shell = process.env) {
+  if (oauthClientId(env, shell)) {
+    return true
+  }
   const backend = backendInfo(env)
   const fix =
     backend.url && !backend.managed
       ? "Create a consumer with the backend's own tooling (DDEV: `ddev druxt-add-consumer`,\n  Lando: `lando druxt-add-consumer`) and copy the printed UUID into .env."
       : 'Run `npm run setup` to provision the backend - it writes this value.'
-  exitWithError(`OAUTH_CLIENT_ID is not set in .env.\n\n  ${fix}`)
+  console.log('OAUTH_CLIENT_ID is not set in .env, so sign-in is off. The rest of the site runs.')
+  console.log(`  To turn it on: ${fix}`)
+  console.log('')
+  return false
 }
 
 export async function ensureBackend() {

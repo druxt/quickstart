@@ -198,16 +198,18 @@ describe('dev guards', () => {
     assert.match(output, /OAUTH_CALLBACK names port 3999/)
   })
 
-  it('explains a missing OAUTH_CLIENT_ID instead of failing inside Nuxt', async () => {
-    const backend = await occupy()
+  it('starts without an OAUTH_CLIENT_ID, and says sign-in is off', async () => {
+    const backend = await stubBackend()
     writeEnv([`BASE_URL=http://127.0.0.1:${backend.port}`])
 
-    const { code, output } = await run('dev.mjs')
+    const { output } = await run('dev.mjs')
     backend.server.close()
 
-    assert.equal(code, 1)
-    assert.match(output, /OAUTH_CLIENT_ID is not set/)
-    assert.match(output, /npm run setup/)
+    assert.match(output, /OAUTH_CLIENT_ID is not set in \.env, so sign-in is off/)
+    assert.match(output, /To turn it on:/)
+    // It carried on to Nuxt, with none of the sign-in checks in the way.
+    assert.match(output, /Starting the Nuxt dev server/)
+    assert.doesNotMatch(output, /invalid_client/)
   })
 })
 

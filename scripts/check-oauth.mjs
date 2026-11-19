@@ -17,7 +17,7 @@ import http from 'node:http'
 import https from 'node:https'
 import path from 'node:path'
 import { pathToFileURL } from 'node:url'
-import { exitWithError, readEnv } from './lib.mjs'
+import { exitWithError, oauthClientId, readEnv } from './lib.mjs'
 
 export function parse(response) {
   try {
@@ -95,7 +95,9 @@ function request(url, postBody) {
 }
 
 export async function checkOauth() {
-  const env = readEnv()
+  // The client ID Nuxt will send, which the shell can set over .env.
+  const env = { ...readEnv() }
+  env.OAUTH_CLIENT_ID = oauthClientId(env)
   if (!env.BASE_URL || !env.OAUTH_CLIENT_ID) {
     exitWithError(
       'BASE_URL and OAUTH_CLIENT_ID must both be set in .env - run `npm run setup` first.'
