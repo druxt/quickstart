@@ -410,14 +410,42 @@ export function foregroundNpm(args, opts = {}) {
  * never start anything for DDEV/external backends.
  */
 /**
- * Whether sign-in is set up, which it is once OAUTH_CLIENT_ID is in .env.
+ * The OAuth client ID Nuxt will see. nuxt.config.js loads .env with dotenv,
+ * which leaves a variable the shell already has alone, so the shell's value
+ * wins, an empty one included.
+ */
+export function oauthClientId(env = readEnv(), shell = process.env) {
+  return ('OAUTH_CLIENT_ID' in shell ? shell.OAUTH_CLIENT_ID : env.OAUTH_CLIENT_ID) || ''
+}
+
+/**
+ * The file a production build leaves behind, holding the client ID it was
+ * built with. nuxt.config.js writes it when the build is done.
+ */
+export const BUILD_AUTH_FILE = path.join(NUXT_DIR, '.nuxt', 'druxt-auth-client-id')
+
+/**
+ * Whether a production build was made with this client ID. The auth module
+ * is compiled in or left out at build time, so a build made before the ID
+ * was set, changed or removed has to be made again.
+ */
+export function buildMatchesAuth(clientId, file = BUILD_AUTH_FILE) {
+  try {
+    return fs.readFileSync(file, 'utf8') === clientId
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Whether sign-in is set up, which it is once OAUTH_CLIENT_ID is set.
  *
  * A site without one still runs: nuxt.config.js leaves druxt-auth out, and
  * only /user/login has nothing to do. So this says how to turn sign-in on
  * and lets the caller carry on.
  */
-export function ensureOauthClientId(env = readEnv()) {
-  if (env.OAUTH_CLIENT_ID) {
+export function ensureOauthClientId(env = readEnv(), shell = process.env) {
+  if (oauthClientId(env, shell)) {
     return true
   }
   const backend = backendInfo(env)

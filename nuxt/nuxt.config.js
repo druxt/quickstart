@@ -12,6 +12,18 @@ const localhostListenURL = function () {
   })
 }
 
+// A production build compiles the auth module in or leaves it out. This
+// records the client ID a build was made with, so `npm run start` can tell a
+// build made before the ID was set, changed or removed, and make it again.
+const recordAuthClientId = function () {
+  this.nuxt.hook('build:done', () => {
+    require('fs').writeFileSync(
+      require('path').join(this.options.buildDir, 'druxt-auth-client-id'),
+      process.env.OAUTH_CLIENT_ID || ''
+    )
+  })
+}
+
 export default {
   target: process.env.NUXT_TARGET,
 
@@ -55,7 +67,8 @@ export default {
   // Modules for dev and build (recommended): https://go.nuxtjs.dev/config-modules
   buildModules: [
     // https://go.nuxtjs.dev/eslint
-    '@nuxtjs/eslint-module'
+    '@nuxtjs/eslint-module',
+    recordAuthClientId
   ],
 
   // Modules: https://go.nuxtjs.dev/config-modules

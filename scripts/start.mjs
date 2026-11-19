@@ -8,7 +8,9 @@ import path from 'node:path'
 import {
   NUXT_DIR,
   ensureBackend,
+  buildMatchesAuth,
   ensureOauthClientId,
+  oauthClientId,
   exitWithError,
   foregroundNpm,
   runNpm,
@@ -21,8 +23,16 @@ async function main() {
   // `nuxt start` needs the server bundle from a production build. A dev
   // server's .nuxt/ has no dist/server, and a failed build leaves it empty, so
   // neither may fool this check.
-  if (!fs.existsSync(path.join(NUXT_DIR, '.nuxt', 'dist', 'server', 'server.js'))) {
-    console.log('No production build found - building the frontend first...')
+  const built = fs.existsSync(path.join(NUXT_DIR, '.nuxt', 'dist', 'server', 'server.js'))
+  // The auth module is compiled in or left out, so a build made with another
+  // OAUTH_CLIENT_ID, or with none, would serve the wrong one.
+  const stale = built && !buildMatchesAuth(oauthClientId())
+  if (!built || stale) {
+    console.log(
+      stale
+        ? 'OAUTH_CLIENT_ID has changed since the last build - building the frontend again...'
+        : 'No production build found - building the frontend first...'
+    )
     console.log('')
     runNpm(['run', 'build'], { cwd: NUXT_DIR })
     console.log('')
