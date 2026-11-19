@@ -392,10 +392,13 @@ describe('printCommands', () => {
 })
 
 describe('ensureOauthClientId', () => {
-  it('passes silently once the consumer UUID is in .env', () => {
-    // The missing case exits the process, so it is asserted from a child
-    // process in guards.test.mjs instead.
-    assert.doesNotThrow(() => ensureOauthClientId({ OAUTH_CLIENT_ID: 'a-uuid' }))
+  it('says sign-in is set up once the consumer UUID is in .env', () => {
+    assert.equal(ensureOauthClientId({ OAUTH_CLIENT_ID: 'a-uuid' }), true)
+  })
+
+  it('says it is not, and does not stop, without one', () => {
+    // What it prints is asserted from a child process in guards.test.mjs.
+    assert.equal(ensureOauthClientId({ BASE_URL: 'https://cms.example.org' }), false)
   })
 })
 

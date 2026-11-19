@@ -67,8 +67,14 @@ export default {
   // production. The visible symptom: client-side /jsonapi requests get
   // the app's own HTML shell back, and hydration wipes the SSR-rendered
   // menus. Matches the druxt.js monorepo's own example placement.
+  //
+  // druxt-auth is left out until .env has an OAuth consumer: it refuses to
+  // load without a client ID, and a site that only reads from Drupal has no
+  // need of one.
   modules: [
-    ['druxt-auth', { clientId: process.env.OAUTH_CLIENT_ID }],
+    ...(process.env.OAUTH_CLIENT_ID
+      ? [['druxt-auth', { clientId: process.env.OAUTH_CLIENT_ID }]]
+      : []),
     'druxt-site',
     localhostListenURL
   ],

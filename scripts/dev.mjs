@@ -148,13 +148,15 @@ function ensurePortHasCallback(backend) {
 
 async function main() {
   const backend = await ensureBackend()
-  ensureOauthClientId()
-  ensurePortHasCallback(backend)
-  // Confirm the backend will actually accept this consumer. Nuxt reads
-  // OAUTH_CLIENT_ID once at startup, so a stale value - or a consumer
-  // left over from an older provision - shows up only as a failed login
-  // in the browser, with nothing in the terminal to explain it.
-  await checkOauth()
+  // The checks below are about sign-in, so they wait for a consumer.
+  if (ensureOauthClientId()) {
+    ensurePortHasCallback(backend)
+    // Confirm the backend will actually accept this consumer. Nuxt reads
+    // OAUTH_CLIENT_ID once at startup, so a stale value - or a consumer
+    // left over from an older provision - shows up only as a failed login
+    // in the browser, with nothing in the terminal to explain it.
+    await checkOauth()
+  }
   // Last thing before the spawn. Everything above is config, and none of
   // it needs the port, so choosing one here leaves the smallest window
   // for another process to take it in the meantime.

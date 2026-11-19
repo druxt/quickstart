@@ -409,19 +409,26 @@ export function foregroundNpm(args, opts = {}) {
  * start the .devtools PHP server when BASE_URL is loopback and down;
  * never start anything for DDEV/external backends.
  */
+/**
+ * Whether sign-in is set up, which it is once OAUTH_CLIENT_ID is in .env.
+ *
+ * A site without one still runs: nuxt.config.js leaves druxt-auth out, and
+ * only /user/login has nothing to do. So this says how to turn sign-in on
+ * and lets the caller carry on.
+ */
 export function ensureOauthClientId(env = readEnv()) {
   if (env.OAUTH_CLIENT_ID) {
-    return
+    return true
   }
-  // Without this, Nuxt dies inside druxt-auth with "requires a clientId
-  // to be provided", which says nothing about what to do. It is empty
-  // whenever provisioning did not finish, so point at that instead.
   const backend = backendInfo(env)
   const fix =
     backend.url && !backend.managed
       ? "Create a consumer with the backend's own tooling (DDEV: `ddev druxt-add-consumer`,\n  Lando: `lando druxt-add-consumer`) and copy the printed UUID into .env."
       : 'Run `npm run setup` to provision the backend - it writes this value.'
-  exitWithError(`OAUTH_CLIENT_ID is not set in .env.\n\n  ${fix}`)
+  console.log('OAUTH_CLIENT_ID is not set in .env, so sign-in is off. The rest of the site runs.')
+  console.log(`  To turn it on: ${fix}`)
+  console.log('')
+  return false
 }
 
 export async function ensureBackend() {
