@@ -28,6 +28,9 @@ const PRIVATE = [
   'https://gitlab.local/drupal/druxt/-/merge_requests/5',
   'http://jenkins.internal/job/build',
   'git@git.lan:druxt/quickstart.git',
+  // An SCP remote whose account is not `git`, which is valid git syntax and
+  // which an earlier version matched only for the `git` account.
+  'deploy@10.0.0.8:team/repo.git',
   'http://10.0.0.5:8080/status',
   'http://192.168.1.20/admin',
   'http://172.16.4.4/admin',
@@ -40,6 +43,10 @@ const PRIVATE = [
   'http://[fd00::1]/admin',
   'http://[fc00::5]/admin',
   'http://[fe80::1]/admin',
+  // An IPv4-mapped literal, in both spellings of its last 32 bits. The hex
+  // one named a private endpoint that every pattern read as public.
+  'https://[::ffff:10.0.0.8]/x',
+  'https://[::ffff:0a00:0008]/x',
 ]
 
 /** Hosts this project genuinely uses, which must never be flagged. */
@@ -82,6 +89,20 @@ describe('findPrivateRefs', () => {
   it('ignores a bare word that is not a URL', () => {
     assert.deepEqual(findPrivateRefs('the gitlab.local host is internal'), [])
   })
+
+  // The SCP pattern needs a colon and a path after the host. Without that,
+  // the `10.0.0` in a version specifier reads as an RFC1918 address and the
+  // rule fails on a changelog.
+  it('reads a version specifier as a version, not as a host', () => {
+    assert.deepEqual(findPrivateRefs('eslint@10.0.0'), [])
+    assert.deepEqual(findPrivateRefs('node@16.20.1 yarn@1.22.22 @druxt/dui@0.1.0'), [])
+  })
+
+  it('reports a host once when both patterns match it', () => {
+    assert.deepEqual(findPrivateRefs('https://user@192.168.1.1:8080/path'), [
+      { line: 1, host: '192.168.1.1' },
+    ])
+  })
 })
 
 describe('lintPrivateRefs', () => {
@@ -99,6 +120,22 @@ describe('lintPrivateRefs', () => {
       )
       execFileSync('git', ['-C', repo, 'add', 'composer.json'])
       assert.deepEqual(lintPrivateRefs(repo), ['composer.json:2: gitlab.local'])
+    } finally {
+      fs.rmSync(repo, { recursive: true, force: true })
+    }
+  })
+
+  // Git tracks symbolic links. Reading one follows it, and a link to a
+  // character device never reaches end of file, so an earlier version would
+  // exhaust memory here rather than report anything.
+  it('does not follow a tracked symbolic link', () => {
+    const repo = fs.mkdtempSync(path.join(os.tmpdir(), 'druxt-private-'))
+    try {
+      execFileSync('git', ['-C', repo, 'init', '-q'])
+      fs.symlinkSync('/dev/zero', path.join(repo, 'zero'))
+      fs.symlinkSync('nowhere', path.join(repo, 'dangling'))
+      execFileSync('git', ['-C', repo, 'add', 'zero', 'dangling'])
+      assert.deepEqual(lintPrivateRefs(repo), [])
     } finally {
       fs.rmSync(repo, { recursive: true, force: true })
     }
