@@ -41,20 +41,75 @@ const PRIVATE_HOST = [
  * remote usually carries it - `https://oauth2:TOKEN@host/path` - and
  * capturing `oauth2` instead of the host let the whole URL through.
  */
+// The bracket class takes dots as well as hex: an IPv4-mapped literal such as
+// [::ffff:10.0.0.8] is a bracketed host that carries an RFC1918 address.
 const URL_HOST =
-  /(?:[a-z][a-z0-9+.-]*:\/\/(?:[^/@\s]*@)?|\bgit@)(\[[0-9A-Fa-f:]+\]|[A-Za-z0-9._-]+)/g
+  /(?:[a-z][a-z0-9+.-]*:\/\/(?:[^/@\s]*@)?|\bgit@)(\[[0-9A-Fa-f:.]+\]|[A-Za-z0-9._-]+)/g
+
+/**
+ * An SCP-style git remote, `user@host:path`.
+ *
+ * `git` is the usual account and not the only valid one, so
+ * `deploy@10.0.0.8:team/repo.git` is a private host in a form the pattern
+ * above never sees. The colon and something after it are required, and that
+ * is what separates a remote from a version such as `eslint@10.0.0`, whose
+ * host would otherwise read as an RFC1918 address.
+ */
+const SCP_HOST = /\b[A-Za-z0-9._-]+@(\[[0-9A-Fa-f:.]+\]|[A-Za-z0-9._-]+):(?=[^\s:])/g
+
+/**
+ * The IPv4 address inside an IPv4-mapped IPv6 literal, else the host as given.
+ *
+ * A mapped address has four spellings, compressed or expanded, with the last
+ * 32 bits written as dotted decimal or as two hex groups. Matching the dotted
+ * spelling alone let `[0:0:0:0:0:ffff:0a00:0008]` name a private endpoint that
+ * every pattern below then read as a public one.
+ */
+export function mappedToIpv4(host) {
+  if (!/^[0-9a-f:.]+$/i.test(host) || !host.includes(':')) return host
+
+  // A trailing dotted quad occupies the last two groups. Rewriting it as hex
+  // first means the zero-fill below only ever counts groups.
+  const text = host.replace(/(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/, (_, a, b, c, d) =>
+    [((+a << 8) | +b).toString(16), ((+c << 8) | +d).toString(16)].join(':')
+  )
+
+  const [head, tail] = text.split('::')
+  const left = head ? head.split(':') : []
+  const right = tail === undefined ? [] : tail ? tail.split(':') : []
+  const groups =
+    tail === undefined ? left : left.concat(Array(8 - left.length - right.length).fill('0'), right)
+
+  if (groups.length !== 8 || groups.some((g) => !/^[0-9a-f]{1,4}$/i.test(g))) {
+    return host
+  }
+  const value = groups.map((g) => parseInt(g, 16))
+  if (!value.slice(0, 5).every((g) => g === 0) || value[5] !== 0xffff) {
+    return host
+  }
+  return [value[6] >> 8, value[6] & 0xff, value[7] >> 8, value[7] & 0xff].join('.')
+}
 
 /** Every private host referenced by `text`, with the line it sits on. */
 export function findPrivateRefs(text) {
   const found = []
   text.split('\n').forEach((line, index) => {
-    for (const match of line.matchAll(URL_HOST)) {
-      const host = match[1].replace(/^\[|\]$/g, '').replace(/[.:]+$/, '')
-      if (ALLOWED.some((pattern) => pattern.test(host))) {
-        continue
-      }
-      if (PRIVATE_HOST.some((pattern) => pattern.test(host))) {
-        found.push({ line: index + 1, host })
+    // A host written as `https://user@host:8080/` matches both patterns, so
+    // the same host on the same line is reported once.
+    const seen = new Set()
+    for (const pattern of [URL_HOST, SCP_HOST]) {
+      for (const match of line.matchAll(pattern)) {
+        const host = mappedToIpv4(match[1].replace(/^\[|\]$/g, '').replace(/[.:]+$/, ''))
+        if (seen.has(host)) {
+          continue
+        }
+        if (ALLOWED.some((candidate) => candidate.test(host))) {
+          continue
+        }
+        if (PRIVATE_HOST.some((candidate) => candidate.test(host))) {
+          seen.add(host)
+          found.push({ line: index + 1, host })
+        }
       }
     }
   })
@@ -85,6 +140,12 @@ export function lintPrivateRefs(root = ROOT) {
     const absolute = path.join(root, file)
     let text
     try {
+      // Git tracks symbolic links, and reading one follows it. A link to a
+      // character device such as /dev/zero never reaches end of file, so the
+      // read below would exhaust memory before the NUL check could reject it.
+      if (!fs.lstatSync(absolute).isFile()) {
+        continue
+      }
       text = fs.readFileSync(absolute, 'utf8')
     } catch {
       continue
